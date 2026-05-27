@@ -1,0 +1,60 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/cmake-build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "HFT_PERF_BUILD": "OFF",
+        "HFT_ENABLE_LTO": "OFF",
+        "HFT_NATIVE_ARCH": "OFF"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/cmake-build-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "HFT_PERF_BUILD": "OFF",
+        "HFT_ENABLE_LTO": "ON",
+        "HFT_NATIVE_ARCH": "ON"
+      }
+    },
+    {
+      "name": "release-perf",
+      "displayName": "Release perf",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/cmake-build-release-perf",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "HFT_PERF_BUILD": "ON",
+        "HFT_ENABLE_LTO": "OFF",
+        "HFT_NATIVE_ARCH": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "release-perf",
+      "configurePreset": "release-perf"
+    }
+  ]
+}

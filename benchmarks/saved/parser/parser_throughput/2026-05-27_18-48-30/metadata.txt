@@ -1,0 +1,67 @@
+Date: 2026-05-27T18:49:57.635783
+Git commit: HEAD
+
+Benchmarks:
+parser_latency
+parser_throughput
+
+Git status:
+A  .gitignore
+A  CMakeLists.txt
+A  CMakePresets.json
+AM apps/benchmarks/book_benchmark.cpp
+A  apps/benchmarks/parser_latency.cpp
+A  apps/benchmarks/parser_throughput.cpp
+A  apps/benchmarks/simulator_benchmark.cpp
+A  apps/replay_itch.cpp
+A  benchmarks/benchmarks/saved/output.json
+A  benchmarks/configs/parser.py
+A  include/benchmark/common/benchmark.hpp
+A  include/benchmark/common/histogram.hpp
+A  include/benchmark/common/json_utilities.hpp
+A  include/benchmark/common/perf_control.hpp
+A  include/benchmark/common/rdtsc.hpp
+A  include/benchmark/order_book/order_book_benchmark.hpp
+A  include/benchmark/parser/parser_benchmark.hpp
+A  include/benchmark/simulator/simulator_benchmark.hpp
+A  include/common/common.hpp
+A  include/market_data/itch_parser.hpp
+A  include/order_book/order_book.hpp
+A  include/order_book/order_book_v1.hpp
+A  include/simulator/simulator.hpp
+A  main.cpp
+A  scripts/build_benchmarks.py
+A  scripts/collect_metadata.py
+A  scripts/common.py
+A  scripts/perf_record.sh
+A  scripts/perf_stat.py
+A  scripts/perf_stat.sh
+A  scripts/plot.py
+A  scripts/run_benchmark.py
+A  scripts/run_benchmark_pipeline.py
+A  scripts/save_benchmark.sh
+A  src/benchmark/common/benchmark.cpp
+A  src/benchmark/order_book/order_book_benchmark.cpp
+A  src/benchmark/parser/parser_benchmark.cpp
+A  src/benchmark/simulator/simulator_benchmark.cpp
+A  src/market_data/itch_parser.cpp
+A  src/order_book/order_book.cpp
+A  src/simulator/simulator.cpp
+?? benchmarks/saved/
+
+Compiler: g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+
+CPU:
+CPU(s):                                  32
+On-line CPU(s) list:                     0-31
+Model name:                              Intel(R) Core(TM) i9-14900HX
+Thread(s) per core:                      2
+Core(s) per socket:                      24
+Socket(s):                               1
+CPU(s) scaling MHz:                      38%
+CPU max MHz:                             5800.0000
+CPU min MHz:                             800.0000
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-31
+
+Build directory: /home/silay/HFT/hft-simulator/cmake-build-release

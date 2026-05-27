@@ -1,0 +1,12 @@
+Parser latency benchmark
+Runs: 1
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "checksum": 8244046384646702385,
+    "messages": 263241937,
+    "p50_cycles": 30,
+    "p999_cycles": 42,
+    "p99_cycles": 41,
+    "skipped": 5502843
+}

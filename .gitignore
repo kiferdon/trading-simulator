@@ -1,0 +1,22 @@
+# Build
+cmake-build-*/
+
+# IDE
+.idea/
+
+# Local tooling
+.agents/
+.codex/
+
+# Market data inputs
+market-data/*
+!market-data/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store
