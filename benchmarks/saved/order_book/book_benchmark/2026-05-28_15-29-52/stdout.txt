@@ -1,0 +1,26 @@
+Order book benchmark
+Runs: 1
+
+=== Throughput ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 263241937,
+    "messages_per_second": 4224579.199189731,
+    "seconds": 62.311990044,
+    "skipped": 5502843
+}
+
+=== Latency ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "checksum": 0,
+    "messages": 263241937,
+    "p50_cycles": 606,
+    "p999_cycles": 1968,
+    "p99_cycles": 1815,
+    "skipped": 5502843
+}

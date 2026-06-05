@@ -1,5 +1,6 @@
 # Build
 cmake-build-*/
+build/
 
 # IDE
 .idea/
@@ -20,3 +21,10 @@ venv/
 
 # OS
 .DS_Store
+
+# Compiled artifacts
+*.o
+*.a
+*.so
+*.dylib
+compile_commands.json

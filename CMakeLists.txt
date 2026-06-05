@@ -8,6 +8,7 @@ project(hft_simulator LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #
 # OPTIONS
@@ -114,17 +115,27 @@ target_link_libraries(benchmark_core
         order_book
 )
 
+# INPUT SOURCE
+#
+
+add_library(input STATIC
+        src/input/input_source.cpp
+)
+
 #
 # SIMULATOR
 #
 
 add_library(simulator STATIC
         src/simulator/simulator.cpp
+        src/simulator/market.cpp
 )
 
 target_link_libraries(simulator
         PUBLIC
         order_book
+        input
+        nlohmann_json::nlohmann_json
 )
 
 #
@@ -176,30 +187,101 @@ target_link_libraries(parser_latency
 # ORDER BOOK BENCHMARKS
 #
 
+add_library(order_book_benchmark STATIC
+        src/benchmark/order_book/order_book_benchmark.cpp
+)
+
+target_link_libraries(order_book_benchmark
+        PUBLIC
+        market_data
+        order_book
+        parser_benchmark
+)
+
 add_executable(book_benchmark
         apps/benchmarks/book_benchmark.cpp
-        include/benchmark/order_book/order_book_benchmark.hpp
-        src/benchmark/order_book/order_book_benchmark.cpp
 )
 
 target_link_libraries(book_benchmark
         PRIVATE
-        parser_benchmark
+        order_book_benchmark
 )
 
 #
-# SIMULATOR BENCHMARKS
+# ORDER BOOK MICROBENCHMARKS
 #
 
-add_executable(simulator_benchmark
-        apps/benchmarks/simulator_benchmark.cpp
+add_library(order_book_microbenchmark STATIC
+        src/benchmark/order_book/order_book_microbenchmark.cpp
+)
+
+target_link_libraries(order_book_microbenchmark
+        PUBLIC
+        order_book
+        benchmark_core
+)
+
+add_executable(book_microbenchmark
+        apps/benchmarks/book_microbenchmark.cpp
+)
+
+target_link_libraries(book_microbenchmark
+        PRIVATE
+        order_book_microbenchmark
+)
+
+# SIMULATOR BENCHMARKS
+
+add_library(simulator_benchmark STATIC
         src/benchmark/simulator/simulator_benchmark.cpp
-        include/benchmark/simulator/simulator_benchmark.hpp
 )
 
 target_link_libraries(simulator_benchmark
-        PRIVATE
+        PUBLIC
         benchmark_core
+        simulator
+        market_data
+        order_book
+)
+
+add_executable(simulator_throughput
+        apps/benchmarks/simulator_throughput.cpp
+)
+
+target_link_libraries(simulator_throughput
+        PRIVATE
+        simulator_benchmark
+)
+
+add_executable(simulator_latency
+        apps/benchmarks/simulator_latency.cpp
+)
+
+target_link_libraries(simulator_latency
+        PRIVATE
+        simulator_benchmark
+)
+
+#
+# TESTS
+#
+
+add_executable(itch_parser_test
+        tests/itch_parser_test.cpp
+)
+
+target_link_libraries(itch_parser_test
+        PRIVATE
+        market_data
+)
+
+add_executable(order_book_test
+        tests/order_book_test.cpp
+)
+
+target_link_libraries(order_book_test
+        PRIVATE
+        order_book
 )
 
 #

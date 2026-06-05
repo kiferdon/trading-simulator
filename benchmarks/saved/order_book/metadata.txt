@@ -1,0 +1,32 @@
+Date: 2026-05-28T15:29:52.918150
+Git commit: 79e768a5d33a52e4da2718af803d5c1d2be1c377
+
+Benchmarks:
+book_benchmark
+
+Git status:
+M CMakeLists.txt
+A  scripts/perf_stat.sh
+A  scripts/save_benchmark.sh
+?? CLAUDE.md
+?? apps/benchmarks/book_benchmark.cpp
+?? apps/benchmarks/book_microbenchmark.cpp
+?? include/benchmark/order_book/
+?? src/benchmark/order_book/
+
+Compiler: g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+
+CPU:
+CPU(s):                                  32
+On-line CPU(s) list:                     0-31
+Model name:                              Intel(R) Core(TM) i9-14900HX
+Thread(s) per core:                      2
+Core(s) per socket:                      24
+Socket(s):                               1
+CPU(s) scaling MHz:                      23%
+CPU max MHz:                             5800.0000
+CPU min MHz:                             800.0000
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-31
+
+Build directory: /home/silay/HFT/hft-simulator/cmake-build-release

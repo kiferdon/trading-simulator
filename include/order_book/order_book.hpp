@@ -8,73 +8,90 @@
 #include <utility>
 #include <vector>
 
+#include "common/common.hpp"
+#include "simulator/market_event.hpp"
+
 namespace ob {
-    enum class Side { Bid, Ask };
+  enum class Side { Bid, Ask };
 
-    using OrderId = uint64_t;
-    using Price = uint32_t;
-    using Volume = int64_t;
+  inline ob::Side itch_side_to_order_book(char side) {
+    return (side == 'B') ? ob::Side::Bid : ob::Side::Ask;
+  }
 
-    class Order {
-    public:
-        OrderId order_id;
-        Price price;
-        Volume volume;
+  class Order {
+  public:
+    dt::OrderId order_id;
+    dt::Price price;
+    dt::Quantity volume;
 
-        Order() : order_id(0), price(0), volume(0) {
-        }
+    Order() : order_id(0), price(0), volume(0) {
+    }
 
-        Order(const OrderId id, const Price p, const Volume v) : order_id(id), price(p), volume(v) {
-        }
+    Order(const dt::OrderId id, const dt::Price p, const dt::Quantity v)
+      : order_id(id), price(p), volume(v) {
+    }
 
-        void reset() {
-            order_id = 0;
-            price = 0;
-            volume = 0;
-        }
-    };
+    void reset() {
+      order_id = 0;
+      price = 0;
+      volume = 0;
+    }
+  };
 
-    class OrderBook {
-    public:
-        // ACCORDING TO PARSER API
-        inline void on_add_order(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                 uint64_t order_ref, char side, uint32_t shares,
-                                 uint64_t stock, uint32_t price) {
-        }
+  class OrderBook {
+  public:
+    virtual ~OrderBook() = default;
 
-        // F: Add Order with MPID Attribution
-        inline void on_add_order_with_mpid(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                           uint64_t order_ref, char side, uint32_t shares,
-                                           uint64_t stock, uint32_t price, uint32_t mpid) {
-        }
+    // PUBLIC API
+    virtual void add_order(dt::OrderId order_id, dt::Price price,
+                           dt::Quantity volume, Side side) {
+    }
 
-        // E: Order Executed
-        inline void on_order_executed(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                      uint64_t order_ref, uint32_t executed_shares, uint64_t match_id) {
-        }
+    virtual void remove_order(dt::OrderId order_id) {
+    }
 
-        // C: Order Executed With Price
-        inline void on_order_executed_with_price(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                                 uint64_t order_ref, uint32_t executed_shares,
-                                                 uint64_t match_id, char printable, uint32_t price) {
-        }
+    virtual void modify_order(dt::OrderId order_id, dt::Price new_price,
+                              dt::Quantity new_volume) {
+    }
 
-        // X: Order Cancel
-        inline void on_order_cancel(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                    uint64_t order_ref, uint32_t canceled_shares) {
-        }
+    virtual void subtract_order(dt::OrderId order_id, dt::Quantity volume) {
+    }
 
-        // D: Order Delete
-        inline void on_order_delete(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                    uint64_t order_ref) {
-        }
+    virtual void replace_order(dt::OrderId original_order_id,
+                               dt::OrderId new_order_id, dt::Price price,
+                               dt::Quantity volume) {
+    }
 
-        // U: Order Replace
-        inline void on_order_replace(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                     uint64_t original_order_ref, uint64_t new_order_ref,
-                                     uint32_t shares, uint32_t price) {
-        }
-    };
-}
+    // Snapshot and event throttling
+    virtual sim::TopOfBook get_snapshot() const { return sim::TopOfBook{}; }
 
-#endif //ORDER_BOOK_ORDER_BOOK_HPP
+    virtual sim::MarketEvent get_market_event(uint64_t timestamp,
+                                              uint16_t stock_locate) {
+      sim::MarketEvent event;
+      event.timestamp = timestamp;
+      event.stock_locate = stock_locate;
+      event.snapshot = get_snapshot();
+      return event;
+    }
+
+    virtual void set_event_throttle(uint32_t interval) {
+      event_throttle_interval_ = interval > 0 ? interval : 1;
+    }
+
+    virtual uint32_t events_since_last_emit() const { return event_counter_; }
+
+    virtual bool should_emit() const {
+      return event_counter_ > 0 && event_counter_ % event_throttle_interval_ == 0;
+    }
+
+    virtual void reset_event_counter() { event_counter_ = 0; }
+
+    void increment_event_counter() { ++event_counter_; }
+
+  protected:
+    uint32_t event_throttle_interval_ = 1;
+    uint32_t event_counter_ = 0;
+  };
+} // namespace ob
+
+#endif // ORDER_BOOK_ORDER_BOOK_HPP

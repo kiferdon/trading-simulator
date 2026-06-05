@@ -1,0 +1,66 @@
+Events disabled
+Order book benchmark
+Runs: 1
+
+=== Throughput ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+Events enabled
+{
+    "checksum": 0,
+    "messages": 263241937,
+    "messages_per_second": 4336719.443983768,
+    "seconds": 60.700707159,
+    "skipped": 5502843
+}
+
+=== Latency ===
+Events disabled
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "checksum": 0,
+    "messages": 263241937,
+    "p50_cycles": 581,
+    "p999_cycles": 1890,
+    "p99_cycles": 1739,
+    "skipped": 5502843
+}
+
+ Performance counter stats for 'taskset -c 2 /home/silay/HFT/hft-simulator/cmake-build-release/book_benchmark 1 /home/silay/HFT/hft-simulator/market-data/12302019.NASDAQ_ITCH50':
+
+               564      context-switches                 #      9.3 cs/sec  cs_per_second     
+                 0      cpu-migrations                   #      0.0 migrations/sec  migrations_per_second
+            60,781      page-faults                      #   1001.4 faults/sec  page_faults_per_second
+         60,694.29 msec task-clock                       #      0.4 CPUs  CPUs_utilized       
+     5,176,570,316      cpu_core/L1-dcache-load-misses/  #      nan %  l1d_miss_rate            (30.77%)
+     <not counted>      cpu_core/L1-icache-load-misses/  #      nan %  l1i_miss_rate          
+     1,653,492,195      cpu_core/LLC-loads/              #     30.4 %  llc_miss_rate            (15.39%)
+     2,215,415,946      cpu_core/branch-misses/          #      7.4 %  branch_miss_rate         (23.08%)
+    29,952,046,660      cpu_core/branches/               #    493.5 M/sec  branch_frequency     (30.77%)
+   324,577,987,375      cpu_core/cpu-cycles/             #      5.3 GHz  cycles_frequency       (38.46%)
+   134,691,837,984      cpu_core/instructions/           #      0.4 instructions  insn_per_cycle  (46.16%)
+    38,536,578,629      cpu_core/dTLB-loads/             #      3.0 %  dtlb_miss_rate           (46.15%)
+     <not counted>      cpu_atom/L1-icache-load-misses/  #      nan %  l1i_miss_rate            (0.00%)
+     <not counted>      cpu_atom/LLC-loads/              #      nan %  llc_miss_rate            (0.00%)
+     <not counted>      cpu_atom/branch-misses/          #      nan %  branch_miss_rate         (0.00%)
+     <not counted>      cpu_atom/branches/               #      nan M/sec  branch_frequency     (0.00%)
+     <not counted>      cpu_atom/cpu-cycles/             #      nan GHz  cycles_frequency       (0.00%)
+     <not counted>      cpu_atom/instructions/           #      nan instructions  insn_per_cycle  (0.00%)
+     <not counted>      cpu_atom/dTLB-loads/             #      nan %  dtlb_miss_rate           (0.00%)
+             TopdownL1 (cpu_core)                        #     37.8 %  tma_bad_speculation    
+                                                         #     31.7 %  tma_frontend_bound       (61.54%)
+                                                         #     13.2 %  tma_backend_bound      
+                                                         #     17.3 %  tma_retiring             (61.54%)
+             TopdownL1 (cpu_atom)                        #      nan %  tma_backend_bound        (0.00%)
+                                                         #      nan %  tma_frontend_bound       (0.00%)
+                                                         #      nan %  tma_bad_speculation    
+                                                         #      nan %  tma_retiring             (0.00%)
+
+     144.499380785 seconds time elapsed
+
+       0.000000000 seconds user
+       0.000000000 seconds sys
+
+
