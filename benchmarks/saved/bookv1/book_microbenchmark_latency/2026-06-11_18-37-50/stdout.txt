@@ -1,0 +1,49 @@
+Order book latency microbenchmark
+
+=== Add Orders ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 17823,
+    "mean_cycles": 622.964,
+    "operations": 1000,
+    "p50_cycles": 406,
+    "p999_cycles": 13634,
+    "p99_cycles": 4629
+}
+
+=== Cancel Orders ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 64848,
+    "mean_cycles": 687.3024,
+    "operations": 10000,
+    "p50_cycles": 439,
+    "p999_cycles": 2300,
+    "p99_cycles": 1672
+}
+
+=== Delete Orders ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 8530,
+    "mean_cycles": 410.7888,
+    "operations": 10000,
+    "p50_cycles": 417,
+    "p999_cycles": 728,
+    "p99_cycles": 605
+}
+
+=== Modify Orders ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 65535,
+    "mean_cycles": 822.3883,
+    "operations": 10000,
+    "p50_cycles": 594,
+    "p999_cycles": 11143,
+    "p99_cycles": 8592
+}

@@ -29,6 +29,8 @@ namespace sim {
 
         void run();
 
+        md::ParseOneResult process_one(md::Cursor &cursor);
+
         void stop();
 
         void add_tracked_stock(dt::StockLocate locate);

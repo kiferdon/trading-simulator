@@ -2,6 +2,7 @@
 // Created by silay on 5/26/26.
 //
 
+#include "benchmark/common/json_utilities.hpp"
 #include "benchmark/parser/parser_benchmark.hpp"
 #include <iostream>
 #include <array>
@@ -121,31 +122,15 @@ namespace benchmark::parser {
     ) {
         json result_json = result;
 
-        result_json["p50_cycles"] =
-                histogram_percentile(
-                    result.histogram,
-                    result.messages,
-                    0.50
-                );
+        auto stats = benchmark::compute_latency_stats(result.histogram);
 
-        result_json["p99_cycles"] =
-                histogram_percentile(
-                    result.histogram,
-                    result.messages,
-                    0.99
-                );
+        result_json["p50_cycles"] = stats.p50_cycles;
+        result_json["p99_cycles"] = stats.p99_cycles;
+        result_json["p999_cycles"] = stats.p999_cycles;
 
-        result_json["p999_cycles"] =
-                histogram_percentile(
-                    result.histogram,
-                    result.messages,
-                    0.999
-                );
-
-        save_histogram(
-            result.histogram,
-            hist_path
-        );
+        if (!hist_path.empty()) {
+            benchmark::save_histogram(result.histogram, hist_path);
+        }
 
         std::cout << result_json.dump(4) << std::endl;
     }

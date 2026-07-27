@@ -28,6 +28,10 @@ namespace sim {
     stop();
   }
 
+  md::ParseOneResult Simulator::process_one(md::Cursor &cursor) {
+    return parser_.parse_one(cursor, *market_);
+  }
+
   void Simulator::stop() {
     if (!trades_.empty()) {
       trade_file_.open("trades.json");

@@ -1,0 +1,63 @@
+//
+// Order book ITCH replay latency benchmark.
+//
+
+#include <cstdlib>
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "benchmark/common/benchmark.hpp"
+#include "benchmark/common/json_utilities.hpp"
+#include "benchmark/common/output.hpp"
+#include "benchmark/order_book/order_book_benchmark.hpp"
+#include "common/common.hpp"
+#include "market_data/itch_parser.hpp"
+
+int main(int argc, char **argv) {
+    std::cout << "Order book latency benchmark" << std::endl;
+
+    const int runs = argc > 1 ? std::atoi(argv[1]) : 1;
+    const std::string data_path = argc > 2
+                                      ? argv[2]
+                                      : "../market-data/12302019.NASDAQ_ITCH50";
+    const std::string json_path = argc > 3
+                                      ? argv[3]
+                                      : "../benchmarks/saved/output.jsonl";
+
+    if (runs < 1) {
+        std::cerr << "Run count must be positive\n";
+        return 1;
+    }
+
+    std::cout << "Runs: " << runs << std::endl;
+
+    std::vector<char> data = common::read_file(data_path);
+
+    benchmark::BenchmarkSessionConfig config;
+    config.runs = runs;
+
+    benchmark::BenchmarkOutput output(json_path);
+
+    benchmark::run_benchmark_session(
+        config,
+        [] {},
+        [&] {
+            md::ITCHParser parser;
+            parser.add_tracked_stock(md::STOCK_LOCATE_QQQ);
+            benchmark::order_book::OrderBookITCHHandler handler;
+
+            return benchmark::order_book::run_latency(
+                parser,
+                handler,
+                data
+            );
+        },
+        [&](const auto &result) {
+            benchmark::order_book::print_result(result, output.hist_path("order_book"));
+            benchmark::write_json_result(result, output.json());
+        }
+    );
+
+    return 0;
+}

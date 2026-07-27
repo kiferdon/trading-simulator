@@ -1,7 +1,22 @@
-//
-// Created by silay on 5/26/26.
-//
-
+/**
+ * @file order_book_benchmark.hpp
+ * @brief ITCH handler and benchmark functions for order books
+ *
+ * ## Design
+ *
+ * OrderBookITCHHandler wraps an OrderBook implementation and implements
+ * the md::ITCHHandler interface. Since OrderBook base class already provides
+ * ITCH handlers that forward to the public API, this just needs to:
+ * 1. Expose an OrderBook (any implementation)
+ * 2. Override ITCHHandler methods to call the corresponding OrderBook::on_* methods
+ *
+ * ## Usage
+ *
+ * To benchmark a different implementation, change the typedef:
+ * ```cpp
+ * using OB_impl = ob::OrderBookV2_PageTable;  // or V2_Vector, V2_Hybrid, etc.
+ * ```
+ */
 #ifndef HFT_SIMULATOR_ORDER_BOOK_BENCHMARK_HPP
 #define HFT_SIMULATOR_ORDER_BOOK_BENCHMARK_HPP
 
@@ -15,10 +30,19 @@
 #include "order_book/order_book_v1.hpp"
 #include <nlohmann/json.hpp>
 
+#include "order_book/order_book_v2_page_table.hpp"
+#include "order_book/order_book_v2_vector.hpp"
+#include "order_book/order_book_v2_hybrid.hpp"
+
 namespace benchmark {
     namespace order_book {
         struct OrderBookITCHHandler;
+
+        // Default to V1 - change this to benchmark other implementations
         using OB_impl = ob::OrderBookV1;
+        //using OB_impl = ob::OrderBookV2_PageTable;
+        //using OB_impl = ob::OrderBookV2_Vector;
+        //using OB_impl = ob::OrderBookV2_Hybrid;
 
         struct OrderBookBenchmarkResult {
             double seconds = 0.0;
@@ -76,46 +100,56 @@ namespace benchmark {
 
         void print_result(const OrderBookLatencyBenchmarkResult &result, const std::string &hist_path);
 
+        /**
+         * @brief ITCH handler that forwards to OrderBook
+         *
+         * Simply calls the corresponding on_* method on the wrapped OrderBook.
+         * Since OrderBook base class implements these to forward to the public API,
+         * this just needs to delegate.
+         */
         struct OrderBookITCHHandler : public md::ITCHHandler {
-            virtual void on_add_order(uint16_t locate, uint16_t tracking, uint64_t timestamp, uint64_t order_ref,
-                                      char side, uint32_t shares, uint64_t stock, uint32_t price) override {
-                order_book.add_order(order_ref, price, shares, ob::itch_side_to_order_book(side));
+            OB_impl order_book; // The order book implementation to test
+
+            void on_add_order(uint16_t locate, uint16_t tracking, uint64_t timestamp, uint64_t order_ref,
+                              char side, uint32_t shares, uint64_t stock, uint32_t price) override {
+                order_book.on_add_order(locate, tracking, timestamp, order_ref, side, shares, stock, price);
             }
 
             void on_add_order_with_mpid(uint16_t locate, uint16_t tracking, uint64_t timestamp,
                                         uint64_t order_ref, char side, uint32_t shares,
-                                        uint64_t stock, uint32_t price, uint32_t mpid) {
-                order_book.add_order(order_ref, price, shares, ob::itch_side_to_order_book(side));
+                                        uint64_t stock, uint32_t price, uint32_t mpid) override {
+                order_book.on_add_order_with_mpid(locate, tracking, timestamp, order_ref, side, shares, stock, price,
+                                                  mpid);
             }
 
             void on_order_executed(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                   uint64_t order_ref, uint32_t executed_shares, uint64_t match_id) {
+                                   uint64_t order_ref, uint32_t executed_shares, uint64_t match_id) override {
+                order_book.on_order_executed(locate, tracking, timestamp, order_ref, executed_shares, match_id);
             }
 
             void on_order_executed_with_price(uint16_t locate, uint16_t tracking, uint64_t timestamp,
                                               uint64_t order_ref, uint32_t executed_shares,
-                                              uint64_t match_id, char printable, uint32_t price) {
-                order_book.subtract_order(order_ref, executed_shares);
+                                              uint64_t match_id, char printable, uint32_t price) override {
+                order_book.on_order_executed_with_price(locate, tracking, timestamp, order_ref, executed_shares,
+                                                        match_id, printable, price);
             }
 
             void on_order_cancel(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                 uint64_t order_ref, uint32_t canceled_shares) {
-                order_book.subtract_order(order_ref, canceled_shares);
+                                 uint64_t order_ref, uint32_t canceled_shares) override {
+                order_book.on_order_cancel(locate, tracking, timestamp, order_ref, canceled_shares);
             }
 
             void on_order_delete(uint16_t locate, uint16_t tracking, uint64_t timestamp,
-                                 uint64_t order_ref) {
-                order_book.remove_order(order_ref);
+                                 uint64_t order_ref) override {
+                order_book.on_order_delete(locate, tracking, timestamp, order_ref);
             }
 
             void on_order_replace(uint16_t locate, uint16_t tracking, uint64_t timestamp,
                                   uint64_t original_order_ref, uint64_t new_order_ref,
-                                  uint32_t shares, uint32_t price) {
-                order_book.replace_order(original_order_ref, new_order_ref, shares, price);
+                                  uint32_t shares, uint32_t price) override {
+                order_book.on_order_replace(locate, tracking, timestamp, original_order_ref, new_order_ref, shares,
+                                            price);
             }
-
-
-            ob::OrderBook order_book;
         };
     }
 } // namespace benchmark::order_book

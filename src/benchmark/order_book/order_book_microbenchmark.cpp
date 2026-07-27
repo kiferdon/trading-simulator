@@ -2,52 +2,14 @@
 // Created by silay on 5/28/26.
 //
 
-#include "benchmark/order_book/order_book_microbenchmark.hpp"
-
 #include <algorithm>
 #include <cstdint>
-#include <fstream>
 #include <iostream>
 #include <random>
 #include <vector>
 
-#include "benchmark/common/benchmark.hpp"
-
-namespace benchmark {
-    template<typename Histogram>
-    uint64_t histogram_percentile(
-        const Histogram &histogram,
-        uint64_t total_samples,
-        double percentile
-    ) {
-        const uint64_t target = static_cast<uint64_t>(
-            static_cast<double>(total_samples) * percentile
-        );
-
-        uint64_t cumulative = 0;
-
-        for (size_t bucket = 0; bucket < histogram.size(); ++bucket) {
-            cumulative += histogram[bucket];
-
-            if (cumulative >= target) {
-                return bucket;
-            }
-        }
-
-        return 0;
-    }
-
-    template<typename Histogram>
-    void save_histogram_file(
-        const Histogram &histogram,
-        const std::string &path
-    ) {
-        std::ofstream out_file(path);
-        for (size_t bucket = 0; bucket < histogram.size(); ++bucket) {
-            out_file << bucket << ' ' << histogram[bucket] << '\n';
-        }
-    }
-}
+#include "benchmark/common/histogram.hpp"
+#include "benchmark/order_book/order_book_microbenchmark.hpp"
 
 namespace benchmark {
     namespace order_book {
@@ -59,6 +21,7 @@ namespace benchmark {
                 }
 
                 uint32_t lcg_range(uint32_t &state, uint32_t min_val, uint32_t max_val) {
+                    if (min_val >= max_val) return min_val;
                     return min_val + (lcg_next(state) % (max_val - min_val));
                 }
 
@@ -98,8 +61,10 @@ namespace benchmark {
                 }
             }
 
+            // ============== Throughput Benchmarks ==============
+
             OrderBookOperationResult run_add_orders(
-                ob::OrderBookV1 &order_book,
+                Book_impl &order_book,
                 const OrderBookSyntheticConfig &config
             ) {
                 const size_t operations = config.batch_size * config.num_batches;
@@ -123,66 +88,15 @@ namespace benchmark {
                 OrderBookOperationResult result{};
                 result.operations = operations;
                 result.seconds = bench_result.seconds;
-                result.operations_per_second = static_cast<double>(operations) / result.seconds;
-
-                return result;
-            }
-
-            OrderBookOperationLatencyResult run_add_orders_latency(
-                ob::OrderBookV1 &order_book,
-                const OrderBookSyntheticConfig &config
-            ) {
-                auto orders = generate_orders(
-                    42,
-                    config.batch_size,
-                    config.min_price,
-                    config.max_price,
-                    config.min_volume,
-                    config.max_volume,
-                    config.base_order_id
-                );
-
-                auto bench_result = benchmark::run_latency([&]() -> bool {
-                    for (const auto &order: orders) {
-                        order_book.add_order(order.order_id, order.price, order.volume, order.side);
-                    }
-                    return true;
-                });
-
-                OrderBookOperationLatencyResult result{};
-                result.histogram = bench_result.histogram;
-
-                uint64_t total_cycles = 0;
-                uint64_t max_cycles = 0;
-                size_t total_samples = 0;
-
-                for (size_t i = 0; i < result.histogram.size(); ++i) {
-                    uint64_t count = result.histogram[i];
-                    if (count > 0) {
-                        total_cycles += i * count;
-                        total_samples += count;
-                        if (i > max_cycles) {
-                            max_cycles = i;
-                        }
-                    }
+                if (result.seconds > 0.0) {
+                    result.operations_per_second = static_cast<double>(operations) / result.seconds;
                 }
-
-                result.operations = total_samples;
-                result.max_cycles = max_cycles;
-
-                if (total_samples > 0) {
-                    result.mean_cycles = static_cast<double>(total_cycles) / static_cast<double>(total_samples);
-                }
-
-                result.p50_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.50);
-                result.p99_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.99);
-                result.p999_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.999);
 
                 return result;
             }
 
             OrderBookOperationResult run_cancel_orders(
-                ob::OrderBookV1 &order_book,
+                Book_impl &order_book,
                 const OrderBookSyntheticConfig &config
             ) {
                 auto orders = generate_orders(
@@ -215,88 +129,30 @@ namespace benchmark {
                 );
 
                 auto bench_result = benchmark::run_throughput([&] {
-                    for (const auto &order: cancel_orders) {
-                        order_book.subtract_order(order.order_id, order.volume);
+                    for (size_t i = 0; i < cancel_orders.size(); ++i) {
+                        order_book.subtract_order(cancel_orders[i].order_id, cancel_orders[i].volume);
                     }
                 });
 
                 OrderBookOperationResult result{};
                 result.operations = cancel_count;
                 result.seconds = bench_result.seconds;
-                result.operations_per_second = static_cast<double>(cancel_count) / result.seconds;
-
-                return result;
-            }
-
-            OrderBookOperationLatencyResult run_cancel_orders_latency(
-                ob::OrderBookV1 &order_book,
-                const OrderBookSyntheticConfig &config
-            ) {
-                auto cancel_orders = generate_orders(
-                    43,
-                    config.batch_size,
-                    config.min_price,
-                    config.max_price,
-                    config.min_volume,
-                    1,
-                    config.base_order_id
-                );
-
-                auto bench_result = benchmark::run_latency([&]() -> bool {
-                    for (const auto &order: cancel_orders) {
-                        order_book.subtract_order(order.order_id, order.volume);
-                    }
-                    return true;
-                });
-
-                OrderBookOperationLatencyResult result{};
-                result.histogram = bench_result.histogram;
-
-                uint64_t total_cycles = 0;
-                uint64_t max_cycles = 0;
-                size_t total_samples = 0;
-
-                for (size_t i = 0; i < result.histogram.size(); ++i) {
-                    uint64_t count = result.histogram[i];
-                    if (count > 0) {
-                        total_cycles += i * count;
-                        total_samples += count;
-                        if (i > max_cycles) {
-                            max_cycles = i;
-                        }
-                    }
+                if (result.seconds > 0.0) {
+                    result.operations_per_second = static_cast<double>(cancel_count) / result.seconds;
                 }
-
-                result.operations = total_samples;
-                result.max_cycles = max_cycles;
-
-                if (total_samples > 0) {
-                    result.mean_cycles = static_cast<double>(total_cycles) / static_cast<double>(total_samples);
-                }
-
-                result.p50_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.50);
-                result.p99_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.99);
-                result.p999_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.999);
 
                 return result;
             }
 
             OrderBookOperationResult run_execute_orders(
-                ob::OrderBookV1 &order_book,
+                Book_impl &order_book,
                 const OrderBookSyntheticConfig &config
             ) {
                 return run_cancel_orders(order_book, config);
             }
 
-            OrderBookOperationLatencyResult run_execute_orders_latency(
-                ob::OrderBookV1 &order_book,
-                const OrderBookSyntheticConfig &config
-            ) {
-                return run_cancel_orders_latency(order_book, config);
-            }
-
             OrderBookOperationResult run_delete_orders(
-                ob::OrderBookV1 &order_book,
+                Book_impl &order_book,
                 const OrderBookSyntheticConfig &config
             ) {
                 auto orders = generate_orders(
@@ -337,66 +193,15 @@ namespace benchmark {
                 OrderBookOperationResult result{};
                 result.operations = delete_count;
                 result.seconds = bench_result.seconds;
-                result.operations_per_second = static_cast<double>(delete_count) / result.seconds;
-
-                return result;
-            }
-
-            OrderBookOperationLatencyResult run_delete_orders_latency(
-                ob::OrderBookV1 &order_book,
-                const OrderBookSyntheticConfig &config
-            ) {
-                auto delete_orders = generate_orders(
-                    43,
-                    config.batch_size,
-                    config.min_price,
-                    config.max_price,
-                    config.min_volume,
-                    config.max_volume,
-                    config.base_order_id
-                );
-
-                auto bench_result = benchmark::run_latency([&]() -> bool {
-                    for (const auto &order: delete_orders) {
-                        order_book.remove_order(order.order_id);
-                    }
-                    return true;
-                });
-
-                OrderBookOperationLatencyResult result{};
-                result.histogram = bench_result.histogram;
-
-                uint64_t total_cycles = 0;
-                uint64_t max_cycles = 0;
-                size_t total_samples = 0;
-
-                for (size_t i = 0; i < result.histogram.size(); ++i) {
-                    uint64_t count = result.histogram[i];
-                    if (count > 0) {
-                        total_cycles += i * count;
-                        total_samples += count;
-                        if (i > max_cycles) {
-                            max_cycles = i;
-                        }
-                    }
+                if (result.seconds > 0.0) {
+                    result.operations_per_second = static_cast<double>(delete_count) / result.seconds;
                 }
-
-                result.operations = total_samples;
-                result.max_cycles = max_cycles;
-
-                if (total_samples > 0) {
-                    result.mean_cycles = static_cast<double>(total_cycles) / static_cast<double>(total_samples);
-                }
-
-                result.p50_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.50);
-                result.p99_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.99);
-                result.p999_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.999);
 
                 return result;
             }
 
             OrderBookOperationResult run_modify_orders(
-                ob::OrderBookV1 &order_book,
+                Book_impl &order_book,
                 const OrderBookSyntheticConfig &config
             ) {
                 auto orders = generate_orders(
@@ -439,17 +244,21 @@ namespace benchmark {
                 OrderBookOperationResult result{};
                 result.operations = modify_count;
                 result.seconds = bench_result.seconds;
-                result.operations_per_second = static_cast<double>(modify_count) / result.seconds;
+                if (result.seconds > 0.0) {
+                    result.operations_per_second = static_cast<double>(modify_count) / result.seconds;
+                }
 
                 return result;
             }
 
-            OrderBookOperationLatencyResult run_modify_orders_latency(
-                ob::OrderBookV1 &order_book,
+            // ============== Latency Benchmarks ==============
+
+            OrderBookOperationLatencyResult run_add_orders_latency(
+                Book_impl &order_book,
                 const OrderBookSyntheticConfig &config
             ) {
-                auto modify_orders = generate_orders(
-                    43,
+                auto orders = generate_orders(
+                    42,
                     config.batch_size,
                     config.min_price,
                     config.max_price,
@@ -458,45 +267,180 @@ namespace benchmark {
                     config.base_order_id
                 );
 
+                size_t order_index = 0;
                 auto bench_result = benchmark::run_latency([&]() -> bool {
-                    for (const auto &order: modify_orders) {
-                        dt::Price new_price = static_cast<dt::Price>((order.price * 101) >> 8);
-                        dt::Quantity new_volume = static_cast<dt::Quantity>((order.volume * 3) >> 1);
-                        order_book.modify_order(order.order_id, new_price, new_volume);
+                    if (order_index >= orders.size()) {
+                        return true;
                     }
-                    return true;
+                    const auto& order = orders[order_index++];
+                    order_book.add_order(order.order_id, order.price, order.volume, order.side);
+                    return false;
                 });
 
                 OrderBookOperationLatencyResult result{};
                 result.histogram = bench_result.histogram;
 
-                uint64_t total_cycles = 0;
-                uint64_t max_cycles = 0;
-                size_t total_samples = 0;
-
-                for (size_t i = 0; i < result.histogram.size(); ++i) {
-                    uint64_t count = result.histogram[i];
-                    if (count > 0) {
-                        total_cycles += i * count;
-                        total_samples += count;
-                        if (i > max_cycles) {
-                            max_cycles = i;
-                        }
-                    }
-                }
-
-                result.operations = total_samples;
-                result.max_cycles = max_cycles;
-
-                if (total_samples > 0) {
-                    result.mean_cycles = static_cast<double>(total_cycles) / static_cast<double>(total_samples);
-                }
-
-                result.p50_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.50);
-                result.p99_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.99);
-                result.p999_cycles = benchmark::histogram_percentile(result.histogram, total_samples, 0.999);
+                auto stats = benchmark::compute_latency_stats(result.histogram);
+                result.operations = stats.total_samples;
+                result.max_cycles = stats.max_cycles;
+                result.mean_cycles = stats.mean_cycles;
+                result.p50_cycles = stats.p50_cycles;
+                result.p99_cycles = stats.p99_cycles;
+                result.p999_cycles = stats.p999_cycles;
 
                 return result;
+            }
+
+            OrderBookOperationLatencyResult run_cancel_orders_latency(
+                Book_impl &order_book,
+                const OrderBookSyntheticConfig &config
+            ) {
+                const size_t batch_count = std::min(config.batch_size, config.initial_orders);
+
+                auto setup_orders = generate_orders(
+                    42,
+                    config.initial_orders,
+                    config.min_price,
+                    config.max_price,
+                    config.min_volume,
+                    config.max_volume,
+                    config.base_order_id
+                );
+                for (const auto& order : setup_orders) {
+                    order_book.add_order(order.order_id, order.price, order.volume, order.side);
+                }
+
+                auto cancel_orders = setup_orders;
+                size_t order_index = 0;
+
+                auto bench_result = benchmark::run_latency([&]() -> bool {
+                    if (order_index >= cancel_orders.size()) {
+                        return true;
+                    }
+                    const auto& order = cancel_orders[order_index++];
+                    order_book.subtract_order(order.order_id, order.volume);
+                    return false;
+                });
+
+                OrderBookOperationLatencyResult result{};
+                result.histogram = bench_result.histogram;
+
+                auto stats = benchmark::compute_latency_stats(result.histogram);
+                result.operations = stats.total_samples;
+                result.max_cycles = stats.max_cycles;
+                result.mean_cycles = stats.mean_cycles;
+                result.p50_cycles = stats.p50_cycles;
+                result.p99_cycles = stats.p99_cycles;
+                result.p999_cycles = stats.p999_cycles;
+
+                return result;
+            }
+
+            OrderBookOperationLatencyResult run_execute_orders_latency(
+                Book_impl &order_book,
+                const OrderBookSyntheticConfig &config
+            ) {
+                return run_cancel_orders_latency(order_book, config);
+            }
+
+            OrderBookOperationLatencyResult run_delete_orders_latency(
+                Book_impl &order_book,
+                const OrderBookSyntheticConfig &config
+            ) {
+                auto setup_orders = generate_orders(
+                    42,
+                    config.initial_orders,
+                    config.min_price,
+                    config.max_price,
+                    config.min_volume,
+                    config.max_volume,
+                    config.base_order_id
+                );
+                for (const auto& order : setup_orders) {
+                    order_book.add_order(order.order_id, order.price, order.volume, order.side);
+                }
+
+                auto delete_orders = setup_orders;
+                size_t order_index = 0;
+
+                auto bench_result = benchmark::run_latency([&]() -> bool {
+                    if (order_index >= delete_orders.size()) {
+                        return true;
+                    }
+                    const auto& order = delete_orders[order_index++];
+                    order_book.remove_order(order.order_id);
+                    return false;
+                });
+
+                OrderBookOperationLatencyResult result{};
+                result.histogram = bench_result.histogram;
+
+                auto stats = benchmark::compute_latency_stats(result.histogram);
+                result.operations = stats.total_samples;
+                result.max_cycles = stats.max_cycles;
+                result.mean_cycles = stats.mean_cycles;
+                result.p50_cycles = stats.p50_cycles;
+                result.p99_cycles = stats.p99_cycles;
+                result.p999_cycles = stats.p999_cycles;
+
+                return result;
+            }
+
+            OrderBookOperationLatencyResult run_modify_orders_latency(
+                Book_impl &order_book,
+                const OrderBookSyntheticConfig &config
+            ) {
+                auto setup_orders = generate_orders(
+                    42,
+                    config.initial_orders,
+                    config.min_price,
+                    config.max_price,
+                    config.min_volume,
+                    config.max_volume,
+                    config.base_order_id
+                );
+                for (const auto& order : setup_orders) {
+                    order_book.add_order(order.order_id, order.price, order.volume, order.side);
+                }
+
+                auto modify_orders = setup_orders;
+                size_t order_index = 0;
+
+                auto bench_result = benchmark::run_latency([&]() -> bool {
+                    if (order_index >= modify_orders.size()) {
+                        return true;
+                    }
+                    const auto& order = modify_orders[order_index++];
+                    dt::Price new_price = static_cast<dt::Price>((order.price * 101) >> 8);
+                    dt::Quantity new_volume = static_cast<dt::Quantity>((order.volume * 3) >> 1);
+                    order_book.modify_order(order.order_id, new_price, new_volume);
+                    return false;
+                });
+
+                OrderBookOperationLatencyResult result{};
+                result.histogram = bench_result.histogram;
+
+                auto stats = benchmark::compute_latency_stats(result.histogram);
+                result.operations = stats.total_samples;
+                result.max_cycles = stats.max_cycles;
+                result.mean_cycles = stats.mean_cycles;
+                result.p50_cycles = stats.p50_cycles;
+                result.p99_cycles = stats.p99_cycles;
+                result.p999_cycles = stats.p999_cycles;
+
+                return result;
+            }
+
+            // ============== JSON/Print Functions ==============
+
+            void write_json_result(const OrderBookOperationResult &result, std::ostream &out) {
+                nlohmann::json j = result;
+                out << j.dump() << "\n";
+            }
+
+            void write_json_result(const OrderBookOperationLatencyResult &result, std::ostream &out) {
+                nlohmann::json j = result;
+                out << j.dump() << "\n";
             }
 
             void print_result(const OrderBookOperationResult &result) {
@@ -506,7 +450,9 @@ namespace benchmark {
 
             void print_result(const OrderBookOperationLatencyResult &result, const std::string &hist_path) {
                 nlohmann::json result_json = result;
-                benchmark::save_histogram_file(result.histogram, hist_path);
+                if (!hist_path.empty()) {
+                    benchmark::save_histogram(result.histogram, hist_path);
+                }
                 std::cout << result_json.dump(4) << std::endl;
             }
         }

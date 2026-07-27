@@ -2,14 +2,16 @@
 // Created by silay on 5/21/26.
 //
 
+// Include all standard library headers BEFORE entering namespace benchmark
+// to avoid std::numeric_limits collision with namespace benchmark
 #include <iostream>
 #include <array>
 #include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <x86intrin.h>
+#include <random>
 #include "benchmark/common//rdtsc.hpp"
-
 #include "benchmark/common//perf_control.hpp"
 
 #ifndef BENCHMARK_COMMON_BENCHMARK_HPP

@@ -1,270 +1,363 @@
 //
-// Created by silay on 5/28/26.
+// Correctness tests for all OrderBook implementations.
 //
-
-#include <cassert>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <ostream>
 #include <string>
-#include <utility>
 
+#include "order_book/order_book.hpp"
 #include "order_book/order_book_v1.hpp"
+#include "order_book/order_book_v2_hybrid.hpp"
+#include "order_book/order_book_v2_page_table.hpp"
+#include "order_book/order_book_v2_vector.hpp"
 
 using namespace ob;
-using OB_impl = OrderBookV1;
 
 namespace {
-    constexpr dt::Price BID_PRICE = 100000;
-    constexpr dt::Price ASK_PRICE = 100100;
-    constexpr dt::Quantity DEFAULT_VOLUME = 100;
+  constexpr dt::Price BID_PRICE = 100000;
+  constexpr dt::Price BID_PRICE_LOWER = 99900;
+  constexpr dt::Price BID_PRICE_HIGHER = 100050;
+  constexpr dt::Price ASK_PRICE = 100100;
+  constexpr dt::Price ASK_PRICE_BETTER = 100050;
 
-    void test_add_order_bid() {
-        OB_impl book;
-        dt::OrderId order_id = 1;
+  struct TestStats {
+    uint32_t checks = 0;
+    uint32_t failures = 0;
+    std::ostream* report = &std::cout;
 
-        book.add_order(order_id, BID_PRICE, DEFAULT_VOLUME, Side::Bid);
+    void expect_eq(const std::string& impl_name,
+                   const std::string& test_name,
+                   const char* field,
+                   uint32_t actual,
+                   uint32_t expected) {
+      ++checks;
+      if (actual == expected) {
+        return;
+      }
 
-        book.print_top_levels(1);
+      ++failures;
+      *report << "[FAIL] " << impl_name << " :: " << test_name
+              << " :: " << field << " expected=" << expected
+              << " actual=" << actual << '\n';
     }
+  };
 
-    void test_add_multiple_orders_same_price() {
-        OB_impl book;
+  void expect_snapshot(TestStats& stats,
+                       const std::string& impl_name,
+                       const std::string& test_name,
+                       const sim::TopOfBook& snapshot,
+                       uint32_t best_bid,
+                       uint32_t best_bid_qty,
+                       uint32_t best_ask,
+                       uint32_t best_ask_qty) {
+    stats.expect_eq(impl_name, test_name, "best_bid", snapshot.best_bid, best_bid);
+    stats.expect_eq(impl_name, test_name, "best_bid_qty", snapshot.best_bid_qty, best_bid_qty);
+    stats.expect_eq(impl_name, test_name, "best_ask", snapshot.best_ask, best_ask);
+    stats.expect_eq(impl_name, test_name, "best_ask_qty", snapshot.best_ask_qty, best_ask_qty);
+  }
 
-        book.add_order(1, BID_PRICE, 50, Side::Bid);
-        book.add_order(2, BID_PRICE, 75, Side::Bid);
-        book.add_order(3, BID_PRICE, 100, Side::Bid);
+  template<typename OB>
+  void test_add_bid_and_ask(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "add_bid_and_ask";
+    OB book;
 
-        book.print_top_levels(1);
-    }
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE, 50, Side::Ask);
 
-    void test_add_bid_and_ask() {
-        OB_impl book;
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 100, ASK_PRICE, 50);
+  }
 
-        book.add_order(1, BID_PRICE, DEFAULT_VOLUME, Side::Bid);
-        book.add_order(2, ASK_PRICE, DEFAULT_VOLUME, Side::Ask);
+  template<typename OB>
+  void test_aggregate_same_price(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "aggregate_same_price";
+    OB book;
 
-        book.print_top_levels(1);
-    }
+    book.add_order(1, BID_PRICE, 50, Side::Bid);
+    book.add_order(2, BID_PRICE, 75, Side::Bid);
+    book.add_order(3, BID_PRICE, 100, Side::Bid);
+    book.add_order(4, ASK_PRICE, 25, Side::Ask);
 
-    void test_get_best_bid_ask() {
-        OB_impl book;
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 225, ASK_PRICE, 25);
+  }
 
-        book.add_order(1, 100000, 100, Side::Bid);
-        book.add_order(2, 100100, 100, Side::Ask);
-        book.add_order(3, 99900, 100, Side::Bid);
-        book.add_order(4, 100200, 100, Side::Ask);
+  template<typename OB>
+  void test_snapshot_quantities(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "snapshot_quantities";
+    OB book;
 
-        book.print_top_levels(2);
-    }
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, BID_PRICE, 25, Side::Bid);
+    book.add_order(3, ASK_PRICE, 50, Side::Ask);
 
-    void test_remove_order() {
-        OB_impl book;
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 125, ASK_PRICE, 50);
+  }
 
-        book.add_order(1, BID_PRICE, 100, Side::Bid);
-        book.add_order(2, BID_PRICE, 50, Side::Bid);
-        book.add_order(3, ASK_PRICE, 75, Side::Ask);
+  template<typename OB>
+  void test_partial_cancel_reduces_volume(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "partial_cancel_reduces_volume";
+    OB book;
 
-        book.remove_order(2);
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE, 50, Side::Ask);
+    book.subtract_order(1, 40);
 
-        book.print_top_levels(2);
-    }
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 60, ASK_PRICE, 50);
+  }
 
-    void test_subtract_order_partial() {
-        OB_impl book;
+  template<typename OB>
+  void test_full_cancel_recomputes_best_bid(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "full_cancel_recomputes_best_bid";
+    OB book;
 
-        book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, BID_PRICE_LOWER, 50, Side::Bid);
+    book.add_order(3, ASK_PRICE, 75, Side::Ask);
+    book.subtract_order(1, 100);
 
-        book.subtract_order(1, 50);
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE_LOWER, 50, ASK_PRICE, 75);
+  }
 
-        book.print_top_levels(1);
-    }
+  template<typename OB>
+  void test_full_cancel_recomputes_best_ask(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "full_cancel_recomputes_best_ask";
+    OB book;
 
-    void test_subtract_order_full() {
-        OB_impl book;
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE_BETTER, 50, Side::Ask);
+    book.add_order(3, ASK_PRICE, 75, Side::Ask);
+    book.subtract_order(2, 50);
 
-        book.add_order(1, BID_PRICE, 100, Side::Bid);
-        book.add_order(2, ASK_PRICE, 50, Side::Ask);
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 100, ASK_PRICE, 75);
+  }
 
-        book.subtract_order(1, 100);
+  template<typename OB>
+  void test_over_cancel_removes_order(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "over_cancel_removes_order";
+    OB book;
 
-        book.print_top_levels(1);
-    }
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, BID_PRICE_LOWER, 60, Side::Bid);
+    book.add_order(3, ASK_PRICE, 75, Side::Ask);
+    book.subtract_order(1, 125);
 
-    void test_modify_order_price() {
-        OB_impl book;
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE_LOWER, 60, ASK_PRICE, 75);
+  }
 
-        book.add_order(1, 100000, 100, Side::Bid);
-        book.add_order(2, 100200, 100, Side::Bid);
+  template<typename OB>
+  void test_delete_preserves_opposite_side(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "delete_preserves_opposite_side";
+    OB book;
 
-        book.modify_order(1, 100050, 100);
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE, 50, Side::Ask);
+    book.remove_order(1);
 
-        book.print_top_levels(2);
-    }
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    0, 0, ASK_PRICE, 50);
+  }
 
-    void test_modify_order_volume() {
-        OB_impl book;
+  template<typename OB>
+  void test_replace_preserves_side(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "replace_preserves_side";
+    OB book;
 
-        book.add_order(1, 100000, 100, Side::Bid);
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE, 50, Side::Ask);
+    book.replace_order(2, 3, ASK_PRICE_BETTER, 75);
 
-        book.modify_order(1, 100000, 150);
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 100, ASK_PRICE_BETTER, 75);
+  }
 
-        book.print_top_levels(1);
-    }
+  template<typename OB>
+  void test_replace_preserves_ask_side(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "replace_preserves_ask_side";
+    OB book;
 
-    void test_on_add_order_from_itch() {
-        OB_impl book;
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE, 50, Side::Ask);
+    book.replace_order(2, 3, ASK_PRICE_BETTER, 75);
 
-        book.on_add_order(7, 1, 1234567890, 100, 'B', 100, 0, 100000);
-        book.on_add_order(7, 1, 1234567891, 101, 'S', 50, 0, 100100);
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 100, ASK_PRICE_BETTER, 75);
+  }
 
-        book.print_top_levels(2);
-    }
+  template<typename OB>
+  void test_modify_same_price_changes_volume(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "modify_same_price_changes_volume";
+    OB book;
 
-    void test_on_order_delete() {
-        OB_impl book;
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE, 50, Side::Ask);
+    book.modify_order(1, BID_PRICE, 150);
 
-        dt::OrderId order_id = 100;
-        book.add_order(order_id, BID_PRICE, DEFAULT_VOLUME, Side::Bid);
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 150, ASK_PRICE, 50);
+  }
 
-        book.on_order_delete(7, 1, 1234567890, order_id);
+  template<typename OB>
+  void test_modify_new_price_moves_level(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "modify_new_price_moves_level";
+    OB book;
 
-        book.print_top_levels(1);
-    }
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, BID_PRICE_LOWER, 50, Side::Bid);
+    book.add_order(3, ASK_PRICE, 75, Side::Ask);
+    book.modify_order(1, BID_PRICE_HIGHER, 120);
 
-    void test_on_order_executed() {
-        OB_impl book;
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE_HIGHER, 120, ASK_PRICE, 75);
+  }
 
-        dt::OrderId order_id = 100;
-        book.add_order(order_id, BID_PRICE, 100, Side::Bid);
-        book.add_order(200, ASK_PRICE, 50, Side::Ask);
+  template<typename OB>
+  void test_same_page_prices_stay_distinct(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "same_page_prices_stay_distinct";
+    OB book;
 
-        book.on_order_executed(7, 1, 1234567890, order_id, 100, 1);
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, BID_PRICE_HIGHER, 50, Side::Bid);
+    book.add_order(3, ASK_PRICE, 75, Side::Ask);
+    book.subtract_order(2, 50);
 
-        book.print_top_levels(1);
-    }
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 100, ASK_PRICE, 75);
+  }
 
-    void test_on_order_cancel() {
-        OB_impl book;
+  template<typename OB>
+  void test_same_page_prices_remain_distinct(TestStats& stats,
+                                             const std::string& impl_name) {
+    const std::string test_name = "same_page_prices_remain_distinct";
+    OB book;
 
-        dt::OrderId order_id = 100;
-        book.add_order(order_id, BID_PRICE, 100, Side::Bid);
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, BID_PRICE_HIGHER, 50, Side::Bid);
+    book.add_order(3, ASK_PRICE, 75, Side::Ask);
+    book.remove_order(2);
 
-        book.on_order_cancel(7, 1, 1234567890, order_id, 50);
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 100, ASK_PRICE, 75);
+  }
 
-        book.print_top_levels(1);
-    }
+  template<typename OB>
+  void test_best_ask_recomputes_after_remove(TestStats& stats,
+                                             const std::string& impl_name) {
+    const std::string test_name = "best_ask_recomputes_after_remove";
+    OB book;
 
-    void test_on_order_replace() {
-        OB_impl book;
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE_BETTER, 50, Side::Ask);
+    book.add_order(3, ASK_PRICE, 75, Side::Ask);
+    book.remove_order(2);
 
-        dt::OrderId original_id = 100;
-        dt::OrderId new_id = 200;
-        book.add_order(original_id, BID_PRICE, 100, Side::Bid);
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 100, ASK_PRICE, 75);
+  }
 
-        book.on_order_replace(7, 1, 1234567890, original_id, new_id, 75, 100050);
+  template<typename OB>
+  void test_itch_handlers(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "itch_handlers";
+    OB book;
 
-        book.print_top_levels(2);
-    }
+    book.on_add_order(7, 1, 1234567890, 1, 'B', 100, 0, BID_PRICE);
+    book.on_add_order(7, 1, 1234567891, 2, 'S', 50, 0, ASK_PRICE);
+    book.on_order_cancel(7, 1, 1234567892, 1, 25);
+    book.on_order_replace(7, 1, 1234567893, 2, 3, 75, ASK_PRICE_BETTER);
 
-    void test_on_add_order_with_mpid() {
-        OB_impl book;
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 75, ASK_PRICE_BETTER, 75);
+  }
 
-        book.on_add_order_with_mpid(7, 1, 1234567890, 100, 'B', 100, 0, 100000, 0x4141524D);
+  template<typename OB>
+  void test_missing_order_operations_are_noops(TestStats& stats, const std::string& impl_name) {
+    const std::string test_name = "missing_order_operations_are_noops";
+    OB book;
 
-        book.print_top_levels(1);
-    }
+    book.add_order(1, BID_PRICE, 100, Side::Bid);
+    book.add_order(2, ASK_PRICE, 50, Side::Ask);
+    book.remove_order(9001);
+    book.subtract_order(9001, 25);
+    book.modify_order(9001, BID_PRICE_HIGHER, 75);
+    book.replace_order(9001, 9002, ASK_PRICE_BETTER, 80);
 
-    void test_multiple_levels_bids() {
-        OB_impl book;
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE, 100, ASK_PRICE, 50);
+  }
 
-        book.add_order(1, 100000, 100, Side::Bid);
-        book.add_order(2, 99900, 50, Side::Bid);
-        book.add_order(3, 99800, 75, Side::Bid);
-        book.add_order(4, 100100, 60, Side::Ask);
-        book.add_order(5, 100200, 80, Side::Ask);
+  template<typename OB>
+  void test_itch_delete_and_execute_with_price(TestStats& stats,
+                                               const std::string& impl_name) {
+    const std::string test_name = "itch_delete_and_execute_with_price";
+    OB book;
 
-        book.print_top_levels(3);
-    }
+    book.on_add_order(7, 1, 1234567890, 1, 'B', 100, 0, BID_PRICE);
+    book.on_add_order(7, 1, 1234567891, 2, 'B', 80, 0, BID_PRICE_LOWER);
+    book.on_add_order(7, 1, 1234567892, 3, 'S', 50, 0, ASK_PRICE_BETTER);
+    book.on_add_order(7, 1, 1234567893, 4, 'S', 75, 0, ASK_PRICE);
+    book.on_order_executed_with_price(7, 1, 1234567894, 1, 100, 0, 'N', BID_PRICE);
+    book.on_order_delete(7, 1, 1234567895, 3);
 
-    void test_order_lifecycle() {
-        OB_impl book;
+    expect_snapshot(stats, impl_name, test_name, book.get_snapshot(),
+                    BID_PRICE_LOWER, 80, ASK_PRICE, 75);
+  }
 
-        dt::OrderId order_id = 1;
+  template<typename OB>
+  void run_all_tests_for_impl(TestStats& stats, const std::string& impl_name) {
+    *stats.report << "Testing " << impl_name << '\n';
 
-        book.add_order(order_id, BID_PRICE, 100, Side::Bid);
-        assert(true && "Added order");
-
-        book.modify_order(order_id, BID_PRICE, 150);
-        assert(true && "Modified order volume");
-
-        book.modify_order(order_id, 100050, 150);
-        assert(true && "Modified order price");
-
-        book.subtract_order(order_id, 50);
-        assert(true && "Partial execution");
-
-        book.subtract_order(order_id, 100);
-        assert(true && "Full execution - order should be removed");
-    }
-} // namespace
+    test_add_bid_and_ask<OB>(stats, impl_name);
+    test_aggregate_same_price<OB>(stats, impl_name);
+    test_snapshot_quantities<OB>(stats, impl_name);
+    test_partial_cancel_reduces_volume<OB>(stats, impl_name);
+    test_full_cancel_recomputes_best_bid<OB>(stats, impl_name);
+    test_full_cancel_recomputes_best_ask<OB>(stats, impl_name);
+    test_over_cancel_removes_order<OB>(stats, impl_name);
+    test_delete_preserves_opposite_side<OB>(stats, impl_name);
+    test_replace_preserves_side<OB>(stats, impl_name);
+    test_replace_preserves_ask_side<OB>(stats, impl_name);
+    test_modify_same_price_changes_volume<OB>(stats, impl_name);
+    test_modify_new_price_moves_level<OB>(stats, impl_name);
+    test_same_page_prices_stay_distinct<OB>(stats, impl_name);
+    test_same_page_prices_remain_distinct<OB>(stats, impl_name);
+    test_best_ask_recomputes_after_remove<OB>(stats, impl_name);
+    test_itch_handlers<OB>(stats, impl_name);
+    test_missing_order_operations_are_noops<OB>(stats, impl_name);
+    test_itch_delete_and_execute_with_price<OB>(stats, impl_name);
+  }
+}
 
 int main() {
-    std::cout << "Order Book Tests started" << std::endl;
-    std::cout << "========================" << std::endl;
+  std::filesystem::create_directories("test-reports");
+  std::ofstream report_file("test-reports/order_book_test_report.txt");
 
-    std::cout << "\n[test_add_order_bid]" << std::endl;
-    test_add_order_bid();
+  TestStats stats;
+  stats.report = &report_file;
 
-    std::cout << "\n[test_add_multiple_orders_same_price]" << std::endl;
-    test_add_multiple_orders_same_price();
+  *stats.report << "Order book correctness report\n";
+  *stats.report << "=============================\n";
 
-    std::cout << "\n[test_add_bid_and_ask]" << std::endl;
-    test_add_bid_and_ask();
+  run_all_tests_for_impl<OrderBookV1>(stats, "OrderBookV1");
+  run_all_tests_for_impl<OrderBookV2_PageTable>(stats, "OrderBookV2_PageTable");
+  run_all_tests_for_impl<OrderBookV2_Vector>(stats, "OrderBookV2_Vector");
+  run_all_tests_for_impl<OrderBookV2_Hybrid>(stats, "OrderBookV2_Hybrid");
 
-    std::cout << "\n[test_get_best_bid_ask]" << std::endl;
-    test_get_best_bid_ask();
+  *stats.report << "Order book correctness checks: " << stats.checks
+                << ", failures: " << stats.failures << '\n';
 
-    std::cout << "\n[test_remove_order]" << std::endl;
-    test_remove_order();
+  report_file.close();
 
-    std::cout << "\n[test_subtract_order_partial]" << std::endl;
-    test_subtract_order_partial();
+  std::ifstream report_in("test-reports/order_book_test_report.txt");
+  std::cout << report_in.rdbuf();
+  std::cout << "Report saved to test-reports/order_book_test_report.txt\n";
 
-    std::cout << "\n[test_subtract_order_full]" << std::endl;
-    test_subtract_order_full();
-
-    std::cout << "\n[test_modify_order_price]" << std::endl;
-    test_modify_order_price();
-
-    std::cout << "\n[test_modify_order_volume]" << std::endl;
-    test_modify_order_volume();
-
-    std::cout << "\n[test_on_add_order_from_itch]" << std::endl;
-    test_on_add_order_from_itch();
-
-    std::cout << "\n[test_on_order_delete]" << std::endl;
-    test_on_order_delete();
-
-    std::cout << "\n[test_on_order_executed]" << std::endl;
-    test_on_order_executed();
-
-    std::cout << "\n[test_on_order_cancel]" << std::endl;
-    test_on_order_cancel();
-
-    std::cout << "\n[test_on_order_replace]" << std::endl;
-    test_on_order_replace();
-
-    std::cout << "\n[test_on_add_order_with_mpid]" << std::endl;
-    test_on_add_order_with_mpid();
-
-    std::cout << "\n[test_multiple_levels_bids]" << std::endl;
-    test_multiple_levels_bids();
-
-    std::cout << "\n[test_order_lifecycle]" << std::endl;
-    test_order_lifecycle();
-
-    std::cout << "========================" << std::endl;
-    std::cout << "Order Book Tests finished" << std::endl;
-
-    return 0;
+  return stats.failures == 0 ? 0 : 1;
 }

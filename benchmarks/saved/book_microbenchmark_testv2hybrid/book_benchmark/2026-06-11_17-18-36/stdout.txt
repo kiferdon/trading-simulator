@@ -1,0 +1,170 @@
+Order book benchmark
+Runs: 10
+
+=== Throughput ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 878589.013903053,
+    "seconds": 2.701998275,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 983519.9573762086,
+    "seconds": 2.413724279,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 970013.7720940101,
+    "seconds": 2.447332263,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 968179.3466396404,
+    "seconds": 2.451969264,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 953045.1402005029,
+    "seconds": 2.490906149,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 961647.2456446862,
+    "seconds": 2.468624551,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 953551.3928564672,
+    "seconds": 2.489583695,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 960329.6775610904,
+    "seconds": 2.472011493,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 962413.3730271421,
+    "seconds": 2.466659407,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 958754.4629374549,
+    "seconds": 2.476072959,
+    "skipped": 266370834
+}
+
+=== Latency ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 19,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 19,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 19,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 19,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 19,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 19,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 19,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 20,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 20,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 20,
+    "p999_cycles": 20,
+    "p99_cycles": 20,
+    "skipped": 266370834
+}

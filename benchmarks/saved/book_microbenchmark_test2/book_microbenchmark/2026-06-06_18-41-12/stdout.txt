@@ -1,0 +1,89 @@
+Order book microbenchmark
+
+=== Add Orders (throughput) ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 7126791.31899803,
+    "seconds": 0.001403156
+}
+
+=== Add Orders (latency) ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 14974,
+    "mean_cycles": 312.48,
+    "operations": 1000,
+    "p50_cycles": 211,
+    "p999_cycles": 7710,
+    "p99_cycles": 2104
+}
+
+=== Cancel Orders (throughput) ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 217864923.7472767,
+    "seconds": 4.59e-06
+}
+
+=== Cancel Orders (latency) ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 44370,
+    "mean_cycles": 411.5884,
+    "operations": 10000,
+    "p50_cycles": 405,
+    "p999_cycles": 1589,
+    "p99_cycles": 677
+}
+
+=== Delete Orders (throughput) ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 5435077.993369205,
+    "seconds": 0.00018399
+}
+
+=== Delete Orders (latency) ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 10998,
+    "mean_cycles": 431.0239,
+    "operations": 10000,
+    "p50_cycles": 429,
+    "p999_cycles": 1187,
+    "p99_cycles": 663
+}
+
+=== Modify Orders (throughput) ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 5459111.256687411,
+    "seconds": 0.00018318
+}
+
+=== Modify Orders (latency) ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 29701,
+    "mean_cycles": 485.8602,
+    "operations": 10000,
+    "p50_cycles": 445,
+    "p999_cycles": 4660,
+    "p99_cycles": 2118
+}

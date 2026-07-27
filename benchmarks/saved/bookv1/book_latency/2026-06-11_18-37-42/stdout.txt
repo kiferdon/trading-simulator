@@ -1,0 +1,12 @@
+Order book latency benchmark
+Runs: 1
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "p50_cycles": 143,
+    "p999_cycles": 786,
+    "p99_cycles": 450,
+    "skipped": 266370834
+}

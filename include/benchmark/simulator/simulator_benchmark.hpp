@@ -30,12 +30,17 @@ namespace benchmark {
 
             std::array<uint64_t, MAX_CYCLES> histogram{};
             size_t messages = 0;
+            size_t skipped = 0;
             size_t simulated_trades = 0;
             uint64_t checksum = 0;
 
             uint64_t p50_cycles = 0;
             uint64_t p99_cycles = 0;
             uint64_t p999_cycles = 0;
+            double tsc_hz = 0.0;
+            double p50_seconds = 0.0;
+            double p99_seconds = 0.0;
+            double p999_seconds = 0.0;
         };
 
         NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
@@ -51,11 +56,16 @@ namespace benchmark {
         NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
             SimulatorLatencyBenchmarkResult,
             messages,
+            skipped,
             simulated_trades,
             checksum,
             p50_cycles,
             p99_cycles,
-            p999_cycles
+            p999_cycles,
+            tsc_hz,
+            p50_seconds,
+            p99_seconds,
+            p999_seconds
         )
 
         struct NullStrategy : public sim::IStrategy {

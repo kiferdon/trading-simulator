@@ -1,0 +1,18 @@
+Median throughput benchmark results
+
+Warmup checksum: 0
+Warmup parsed: 2373946
+Warmup skipped: 266370834
+
+Median Benchmark time: 2.692458686
+Median Mps: 881701.9226121563
+Median GiBbps: 0.0
+
+Median Time before benchmark: 0
+Median Time after benchmark: 0
+Median Total time: 2.692458686
+
+Raw run files:
+stdout.txt
+stderr.txt
+output.jsonl

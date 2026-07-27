@@ -532,6 +532,8 @@ namespace md {
   }
 
   inline bool ITCHParser::add_tracked_stock(dt::StockLocate stock_locate) {
+    track_all = false;
+
     if (tracked_count >= MaxTrackedStocks)
       return false;
 

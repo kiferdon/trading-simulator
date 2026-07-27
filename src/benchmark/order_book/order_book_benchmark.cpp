@@ -7,8 +7,12 @@
 #include <iostream>
 
 #include "benchmark/common/histogram.hpp"
+#include "benchmark/common/rdtsc.hpp"
 #include "market_data/itch_parser.hpp"
 #include "order_book/order_book_v1.hpp"
+#include "order_book/order_book_v2_hybrid.hpp"
+#include "order_book/order_book_v2_page_table.hpp"
+#include "order_book/order_book_v2_vector.hpp"
 
 namespace benchmark {
     namespace order_book {
@@ -17,40 +21,18 @@ namespace benchmark {
             OrderBookITCHHandler &handler,
             const std::vector<char> &data
         ) {
-            md::Cursor cursor(data.data(), data.size());
-            md::ParseOneResult parse_result{};
-            size_t messages = 0;
-            size_t skipped = 0;
+            md::ParseResult parse_result{};
 
             auto benchmark_result =
                     benchmark::run_throughput([&] {
-                        cursor.reset();
-
-                        while (!cursor.is_in_bounds(1)) [[unlikely]] {
-                        }
-
-                        while (true) {
-                            parse_result = parser.parse_one(cursor, handler);
-
-                            if (parse_result.needs_more_data) [[unlikely]] {
-                                break;
-                            }
-
-                            if (parse_result.parsed) {
-                                ++messages;
-                            } else if (parse_result.skipped) {
-                                ++skipped;
-                            }
-
-                            if (!cursor.is_in_bounds(1)) {
-                                break;
-                            }
-                        }
+                        parse_result = parser.parse(data.data(), data.size(), handler);
                     });
 
+            //do_not_optimize(parse_result);
+
             OrderBookBenchmarkResult result{};
-            result.messages = messages;
-            result.skipped = skipped;
+            result.messages = parse_result.messages;
+            result.skipped = parse_result.skipped;
             result.checksum = 0;
             result.seconds = benchmark_result.seconds;
             result.messages_per_second =
@@ -69,30 +51,34 @@ namespace benchmark {
 
             OrderBookLatencyBenchmarkResult result{};
 
-            const auto benchmark_result =
-                    benchmark::run_latency([&]() -> bool {
-                        if (!cursor.is_in_bounds(1)) [[unlikely]] {
-                            return true;
-                        }
+            result.histogram.fill(0);
 
-                        md::ParseOneResult parse_result = parser.parse_one(cursor, handler);
+            while (cursor.is_in_bounds(1)) {
+                const uint64_t start = benchmark::rdtsc_start();
+                md::ParseOneResult parse_result = parser.parse_one(cursor, handler);
+                const uint64_t end = benchmark::rdtsc_end();
 
-                        if (parse_result.needs_more_data) [[unlikely]] {
-                            std::cerr << "Need more data, breaking latency benchmark\n";
-                            return true;
-                        }
+                if (parse_result.needs_more_data) [[unlikely]] {
+                    std::cerr << "Need more data, breaking latency benchmark\n";
+                    break;
+                }
 
-                        if (parse_result.parsed) {
-                            ++result.messages;
-                        } else if (parse_result.skipped) {
-                            ++result.skipped;
-                        }
+                if (parse_result.parsed) {
+                    ++result.messages;
+                    const uint64_t cycles = end - start;
+                    const uint64_t bucket = cycles < OrderBookLatencyBenchmarkResult::MAX_CYCLES
+                                                ? cycles
+                                                : OrderBookLatencyBenchmarkResult::MAX_CYCLES - 1;
+                    ++result.histogram[bucket];
+                } else if (parse_result.skipped) {
+                    ++result.skipped;
+                }
+            }
 
-                        return false;
-                    });
-
-            result.histogram = benchmark_result.histogram;
             result.checksum = 0;
+            result.p50_cycles = benchmark::histogram_percentile(result.histogram, result.messages, 0.50);
+            result.p99_cycles = benchmark::histogram_percentile(result.histogram, result.messages, 0.99);
+            result.p999_cycles = benchmark::histogram_percentile(result.histogram, result.messages, 0.999);
 
             return result;
         }
@@ -107,27 +93,6 @@ namespace benchmark {
             const std::string &hist_path
         ) {
             nlohmann::json result_json = result;
-
-            result_json["p50_cycles"] =
-                    benchmark::histogram_percentile(
-                        result.histogram,
-                        result.messages,
-                        0.50
-                    );
-
-            result_json["p99_cycles"] =
-                    benchmark::histogram_percentile(
-                        result.histogram,
-                        result.messages,
-                        0.99
-                    );
-
-            result_json["p999_cycles"] =
-                    benchmark::histogram_percentile(
-                        result.histogram,
-                        result.messages,
-                        0.999
-                    );
 
             benchmark::save_histogram(
                 result.histogram,

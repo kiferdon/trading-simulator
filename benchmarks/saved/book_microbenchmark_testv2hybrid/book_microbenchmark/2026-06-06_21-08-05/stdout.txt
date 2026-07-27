@@ -1,0 +1,145 @@
+Order book microbenchmark
+
+=== Add Orders (throughput) ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 4557648.326385958,
+    "seconds": 0.002194114
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 7835529.109774196,
+    "seconds": 0.001276238
+}
+
+=== Add Orders (latency) ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 4717,
+    "mean_cycles": 329.524,
+    "operations": 1000,
+    "p50_cycles": 311,
+    "p999_cycles": 3137,
+    "p99_cycles": 561
+}
+{
+    "max_cycles": 65535,
+    "mean_cycles": 297.611,
+    "operations": 1000,
+    "p50_cycles": 214,
+    "p999_cycles": 7572,
+    "p99_cycles": 376
+}
+
+=== Cancel Orders (throughput) ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 244738130.20068523,
+    "seconds": 4.086e-06
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 268384326.35534084,
+    "seconds": 3.726e-06
+}
+
+=== Cancel Orders (latency) ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 57824,
+    "mean_cycles": 614.8371,
+    "operations": 10000,
+    "p50_cycles": 613,
+    "p999_cycles": 5168,
+    "p99_cycles": 845
+}
+{
+    "max_cycles": 22520,
+    "mean_cycles": 434.481,
+    "operations": 10000,
+    "p50_cycles": 421,
+    "p999_cycles": 2136,
+    "p99_cycles": 770
+}
+
+=== Delete Orders (throughput) ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 5614444.843693856,
+    "seconds": 0.000178112
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 5273455.009518586,
+    "seconds": 0.000189629
+}
+
+=== Delete Orders (latency) ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 23572,
+    "mean_cycles": 572.5175,
+    "operations": 10000,
+    "p50_cycles": 567,
+    "p999_cycles": 1297,
+    "p99_cycles": 900
+}
+{
+    "max_cycles": 7782,
+    "mean_cycles": 414.14,
+    "operations": 10000,
+    "p50_cycles": 409,
+    "p999_cycles": 1491,
+    "p99_cycles": 702
+}
+
+=== Modify Orders (throughput) ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 5894940.372678131,
+    "seconds": 0.000169637
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 6840740.715404664,
+    "seconds": 0.000146183
+}
+
+=== Modify Orders (latency) ===
+Running warmup with 1000 iterations
+Warmup completed
+{
+    "max_cycles": 8783,
+    "mean_cycles": 477.1912,
+    "operations": 10000,
+    "p50_cycles": 435,
+    "p999_cycles": 4091,
+    "p99_cycles": 2266
+}
+{
+    "max_cycles": 30537,
+    "mean_cycles": 440.6077,
+    "operations": 10000,
+    "p50_cycles": 400,
+    "p999_cycles": 6954,
+    "p99_cycles": 914
+}

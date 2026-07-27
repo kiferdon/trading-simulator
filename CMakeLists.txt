@@ -96,6 +96,9 @@ add_library(market_data STATIC
 
 add_library(order_book STATIC
         src/order_book/order_book.cpp
+        src/order_book/order_book_v2_page_table.cpp
+        src/order_book/order_book_v2_vector.cpp
+        src/order_book/order_book_v2_hybrid.cpp
 )
 
 target_link_libraries(order_book
@@ -198,11 +201,20 @@ target_link_libraries(order_book_benchmark
         parser_benchmark
 )
 
-add_executable(book_benchmark
-        apps/benchmarks/book_benchmark.cpp
+add_executable(book_throughput
+        apps/benchmarks/book_throughput.cpp
 )
 
-target_link_libraries(book_benchmark
+target_link_libraries(book_throughput
+        PRIVATE
+        order_book_benchmark
+)
+
+add_executable(book_latency
+        apps/benchmarks/book_latency.cpp
+)
+
+target_link_libraries(book_latency
         PRIVATE
         order_book_benchmark
 )
@@ -221,11 +233,20 @@ target_link_libraries(order_book_microbenchmark
         benchmark_core
 )
 
-add_executable(book_microbenchmark
-        apps/benchmarks/book_microbenchmark.cpp
+add_executable(book_microbenchmark_throughput
+        apps/benchmarks/book_microbenchmark_throughput.cpp
 )
 
-target_link_libraries(book_microbenchmark
+target_link_libraries(book_microbenchmark_throughput
+        PRIVATE
+        order_book_microbenchmark
+)
+
+add_executable(book_microbenchmark_latency
+        apps/benchmarks/book_microbenchmark_latency.cpp
+)
+
+target_link_libraries(book_microbenchmark_latency
         PRIVATE
         order_book_microbenchmark
 )

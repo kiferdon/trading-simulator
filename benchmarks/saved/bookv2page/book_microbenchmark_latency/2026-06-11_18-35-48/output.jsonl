@@ -1,0 +1,4 @@
+{"max_cycles":65535,"mean_cycles":491.359,"operations":1000,"p50_cycles":122,"p999_cycles":65535,"p99_cycles":3882}
+{"max_cycles":65535,"mean_cycles":199.1489,"operations":10000,"p50_cycles":116,"p999_cycles":46998,"p99_cycles":157}
+{"max_cycles":65535,"mean_cycles":208.8252,"operations":10000,"p50_cycles":120,"p999_cycles":37072,"p99_cycles":393}
+{"max_cycles":65535,"mean_cycles":201.6877,"operations":10000,"p50_cycles":113,"p999_cycles":6331,"p99_cycles":1728}

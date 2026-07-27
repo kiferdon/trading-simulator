@@ -1,0 +1,53 @@
+Date: 2026-06-06T18:41:12.778637
+Git commit: 8a534bc37068835609d24bae0950aa75881157b0
+
+Benchmarks:
+book_microbenchmark
+
+Git status:
+M CLAUDE.md
+ M CMakeLists.txt
+ M apps/benchmarks/book_microbenchmark.cpp
+ M benchmarks/saved/hist.txt
+ M include/benchmark/common/benchmark.hpp
+ M include/benchmark/common/histogram.hpp
+ M include/benchmark/order_book/order_book_benchmark.hpp
+ M include/benchmark/order_book/order_book_microbenchmark.hpp
+ M include/order_book/order_book.hpp
+ M include/order_book/order_book_v1.hpp
+ M src/benchmark/order_book/order_book_microbenchmark.cpp
+ M src/benchmark/parser/parser_benchmark.cpp
+AD src/benchmark/simulator/market.cpp
+ M src/benchmark/simulator/simulator_benchmark.cpp
+ M tests/order_book_test.cpp
+?? BENCHMARK_PIPELINE_PLAN.md
+?? ORDER_BOOK_ANALYSIS.md
+?? ORDER_BOOK_V2_REPORT.md
+?? benchmarks/saved/book_microbenchmark_test/
+?? benchmarks/saved/book_microbenchmark_test2/
+?? include/benchmark/common/output.hpp
+?? include/common/delegate.hpp
+?? include/order_book/order_book_v2_hybrid.hpp
+?? include/order_book/order_book_v2_page_table.hpp
+?? include/order_book/order_book_v2_vector.hpp
+?? src/order_book/order_book_v2_hybrid.cpp
+?? src/order_book/order_book_v2_page_table.cpp
+?? src/order_book/order_book_v2_vector.cpp
+?? tests/order_book_v2_test.cpp
+
+Compiler: g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+
+CPU:
+CPU(s):                                  32
+On-line CPU(s) list:                     0-31
+Model name:                              Intel(R) Core(TM) i9-14900HX
+Thread(s) per core:                      2
+Core(s) per socket:                      24
+Socket(s):                               1
+CPU(s) scaling MHz:                      23%
+CPU max MHz:                             5800.0000
+CPU min MHz:                             800.0000
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-31
+
+Build directory: /home/silay/HFT/hft-simulator/cmake-build-release

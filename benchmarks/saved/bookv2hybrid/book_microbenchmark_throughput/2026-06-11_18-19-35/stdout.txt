@@ -1,0 +1,257 @@
+Order book throughput microbenchmark
+
+=== Add Orders ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 7041856.79680018,
+    "seconds": 0.00142008
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 11275304.602353832,
+    "seconds": 0.000886894
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 11973968.592280382,
+    "seconds": 0.000835145
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 12083000.547359925,
+    "seconds": 0.000827609
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 13320616.584700473,
+    "seconds": 0.000750716
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 18883851.09705733,
+    "seconds": 0.000529553
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 18573861.747317467,
+    "seconds": 0.000538391
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 18905485.804815985,
+    "seconds": 0.000528947
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 17760664.390933536,
+    "seconds": 0.000563042
+}
+Running throughput benchmark
+{
+    "operations": 10000,
+    "operations_per_second": 17797014.372868806,
+    "seconds": 0.000561892
+}
+
+=== Cancel Orders ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 39481996.20972837,
+    "seconds": 2.5328e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 37441964.9543208,
+    "seconds": 2.6708e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 50494849.52534842,
+    "seconds": 1.9804e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 63536438.14727747,
+    "seconds": 1.5739e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 77226040.62089737,
+    "seconds": 1.2949e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 82149018.31923108,
+    "seconds": 1.2173e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 78021377.85753296,
+    "seconds": 1.2817e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 78982702.78808941,
+    "seconds": 1.2661e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 69444444.44444445,
+    "seconds": 1.44e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 78622533.21802029,
+    "seconds": 1.2719e-05
+}
+
+=== Delete Orders ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 12454696.043143068,
+    "seconds": 8.0291e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 11972606.675925484,
+    "seconds": 8.3524e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 11875638.315559462,
+    "seconds": 8.4206e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 12065345.91346734,
+    "seconds": 8.2882e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 11934883.276841551,
+    "seconds": 8.3788e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 12780369.352674292,
+    "seconds": 7.8245e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 12309510.327679165,
+    "seconds": 8.1238e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 13262775.368373586,
+    "seconds": 7.5399e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 12255502.720721604,
+    "seconds": 8.1596e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 12227480.038638838,
+    "seconds": 8.1783e-05
+}
+
+=== Modify Orders ===
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 9469427.951857429,
+    "seconds": 0.000105603
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 9735012.94756722,
+    "seconds": 0.000102722
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 9372598.271692878,
+    "seconds": 0.000106694
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 9603103.723123314,
+    "seconds": 0.000104133
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 10025766.219183302,
+    "seconds": 9.9743e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 10977671.416339165,
+    "seconds": 9.1094e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 10833297.222342592,
+    "seconds": 9.2308e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 10779346.771585643,
+    "seconds": 9.277e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 11043256.435457688,
+    "seconds": 9.0553e-05
+}
+Running throughput benchmark
+{
+    "operations": 1000,
+    "operations_per_second": 10032605.969400553,
+    "seconds": 9.9675e-05
+}

@@ -1,0 +1,84 @@
+Order book throughput benchmark
+Runs: 10
+Running warmup with 1000 iterations
+Warmup completed
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1046164.6692925192,
+    "seconds": 2.269189612,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1044554.8294826961,
+    "seconds": 2.272686826,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1022861.3981558344,
+    "seconds": 2.320887272,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1014638.6786293624,
+    "seconds": 2.339695943,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1050762.5642144894,
+    "seconds": 2.259260161,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1047093.3630365279,
+    "seconds": 2.26717701,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1052741.5556686826,
+    "seconds": 2.255013101,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1053624.1156278164,
+    "seconds": 2.253124207,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1051073.4079197745,
+    "seconds": 2.258592009,
+    "skipped": 266370834
+}
+Running throughput benchmark
+{
+    "checksum": 0,
+    "messages": 2373946,
+    "messages_per_second": 1054382.2443967594,
+    "seconds": 2.251504151,
+    "skipped": 266370834
+}
