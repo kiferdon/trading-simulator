@@ -1,5 +1,5 @@
-Date: 2026-06-11T19:05:07.166198
-Git commit: 8a534bc37068835609d24bae0950aa75881157b0
+Date: 2026-08-06T18:06:25.413827
+Git commit: 5c846ee7269f7bf25b251c200a8f27e83fc4c44e
 
 Benchmarks:
 simulator_latency
@@ -7,53 +7,28 @@ simulator_latency
 Git status:
 M CLAUDE.md
  M CMakeLists.txt
- D apps/benchmarks/book_benchmark.cpp
- D apps/benchmarks/book_microbenchmark.cpp
-D  benchmarks/saved/hist.txt
- M include/benchmark/common/benchmark.hpp
- M include/benchmark/common/histogram.hpp
- M include/benchmark/order_book/order_book_benchmark.hpp
- M include/benchmark/order_book/order_book_microbenchmark.hpp
- M include/market_data/itch_parser.hpp
- M include/order_book/order_book.hpp
- M include/order_book/order_book_v1.hpp
- M src/benchmark/order_book/order_book_benchmark.cpp
- M src/benchmark/order_book/order_book_microbenchmark.cpp
- M src/benchmark/parser/parser_benchmark.cpp
-AD src/benchmark/simulator/market.cpp
+ M apps/benchmarks/simulator_latency.cpp
+ M apps/benchmarks/simulator_throughput.cpp
+ M apps/replay_itch.cpp
+ M benchmarks/saved/sim/metadata.txt
+A  benchmarks/saved/sim/simulator_latency/2026-08-06_17-53-18/output.jsonl
+A  benchmarks/saved/sim/simulator_latency/2026-08-06_17-53-18/report.txt
+A  benchmarks/saved/sim/simulator_latency/2026-08-06_17-53-18/simulator_latency.hist
+A  benchmarks/saved/sim/simulator_latency/2026-08-06_17-53-18/stderr.txt
+A  benchmarks/saved/sim/simulator_latency/2026-08-06_17-53-18/stdout.txt
+A  benchmarks/saved/sim/simulator_throughput/2026-08-06_17-53-13/output.jsonl
+A  benchmarks/saved/sim/simulator_throughput/2026-08-06_17-53-13/report.txt
+A  benchmarks/saved/sim/simulator_throughput/2026-08-06_17-53-13/stderr.txt
+A  benchmarks/saved/sim/simulator_throughput/2026-08-06_17-53-13/stdout.txt
+ M include/benchmark/simulator/simulator_benchmark.hpp
+AM include/strategies/debug_strategy.hpp
+AM include/strategies/null_strategy.hpp
+AM include/strategies/trading_strategy.hpp
+A  scripts/sim_latency_strategy.log
+A  scripts/sim_throughput_strategy.log
+A  scripts/trades.json
  M src/benchmark/simulator/simulator_benchmark.cpp
- M src/simulator/market.cpp
- M tests/order_book_test.cpp
-?? AGENTS.md
-?? BENCHMARK_PIPELINE_PLAN.md
-?? ORDER_BOOK_ANALYSIS.md
-?? ORDER_BOOK_V2_CORRECTNESS_PLAN.md
-?? ORDER_BOOK_V2_REPORT.md
-?? apps/benchmarks/book_latency.cpp
-?? apps/benchmarks/book_microbenchmark_latency.cpp
-?? apps/benchmarks/book_microbenchmark_throughput.cpp
-?? apps/benchmarks/book_throughput.cpp
-?? benchmarks/saved/book_microbenchmark_test2/
-?? benchmarks/saved/book_microbenchmark_testv1/
-?? benchmarks/saved/book_microbenchmark_testv2/
-?? benchmarks/saved/book_microbenchmark_testv2hybrid/
-?? benchmarks/saved/book_microbenchmark_testv2vector/
-?? benchmarks/saved/bookv1/
-?? benchmarks/saved/bookv2hybrid/
-?? benchmarks/saved/bookv2page/
-?? benchmarks/saved/bookv2vector/
-?? benchmarks/saved/order_book_latency.hist
-?? benchmarks/saved/output.jsonl
-?? benchmarks/saved/sim/
-?? include/benchmark/common/output.hpp
-?? include/common/delegate.hpp
-?? include/order_book/order_book_v2_hybrid.hpp
-?? include/order_book/order_book_v2_page_table.hpp
-?? include/order_book/order_book_v2_vector.hpp
-?? src/order_book/order_book_v2_hybrid.cpp
-?? src/order_book/order_book_v2_page_table.cpp
-?? src/order_book/order_book_v2_vector.cpp
-?? test-reports/
+?? benchmarks/saved/sim/simulator_latency/2026-08-06_17-59-05/
 
 Compiler: g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
 
@@ -64,7 +39,7 @@ Model name:                              Intel(R) Core(TM) i9-14900HX
 Thread(s) per core:                      2
 Core(s) per socket:                      24
 Socket(s):                               1
-CPU(s) scaling MHz:                      20%
+CPU(s) scaling MHz:                      31%
 CPU max MHz:                             5800.0000
 CPU min MHz:                             800.0000
 NUMA node(s):                            1

@@ -15,6 +15,7 @@
 #include "common/common.hpp"
 #include "market_data/itch_parser.hpp"
 #include "simulator/simulator.hpp"
+#include "strategies/debug_strategy.hpp"
 
 namespace {
     class MemoryInputSource : public sim::IInputSource {
@@ -40,50 +41,6 @@ namespace {
         bool read_chunk(const char *&, size_t &) override {
             return false;
         }
-    };
-
-    class TradingStrategy : public sim::IStrategy {
-    public:
-        void on_event(const sim::MarketEvent &event) override {
-            checksum += event.timestamp;
-
-            if (event.snapshot.best_bid == 0 ||
-                event.snapshot.best_ask <= event.snapshot.best_bid) {
-                return;
-            }
-
-            sim::SimulatedTrade trade{};
-            trade.timestamp = event.timestamp;
-            trade.quantity = 100;
-            trade.stock_locate = event.stock_locate;
-            trade.side = buy_next_ ? sim::Side::Buy : sim::Side::Sell;
-            buy_next_ = !buy_next_;
-            trade.price = trade.side == sim::Side::Buy
-                              ? event.snapshot.best_ask
-                              : event.snapshot.best_bid;
-
-            if (simulator_ != nullptr) {
-                simulator_->save_trade(trade);
-            }
-        }
-
-        void on_trade(const sim::SimulatedTrade &trade) override {
-            ++trades;
-            checksum += trade.timestamp;
-            checksum += trade.price;
-            checksum += trade.quantity;
-        }
-
-        void set_simulator(sim::Simulator *simulator) override {
-            simulator_ = simulator;
-        }
-
-        size_t trades = 0;
-        uint64_t checksum = 0;
-
-    private:
-        sim::Simulator *simulator_ = nullptr;
-        bool buy_next_ = true;
     };
 
     double calibrate_tsc_hz() {
@@ -119,21 +76,37 @@ namespace benchmark {
         SimulatorBenchmarkResult run_throughput(
             const std::vector<char> &data
         ) {
+            SimulatorBenchmarkResult bench_result{};
+
             auto result = benchmark::run_throughput([&] {
+                sim::DebugStrategy::Config config{};
+
+                config.flush_mode = sim::DebugStrategy::FlushMode::OnFinish;
+                config.log_events = false;
+                config.log_file_path = "sim_throughput_strategy.log";
+                config.log_trades = true;
+
+                std::unique_ptr<sim::DebugStrategy> strategy = std::make_unique<sim::DebugStrategy>(config);
+                sim::DebugStrategy *strategy_ptr = strategy.get();
+
                 sim::Simulator sim(
                     std::make_unique<MemoryInputSource>(data),
-                    std::make_unique<NullStrategy>()
+                    std::move(strategy)
                 );
+
+
+                sim.set_strategy_simulator();
                 sim.add_tracked_stock(md::STOCK_LOCATE_QQQ);
                 sim.set_event_throttle(std::optional<dt::StockLocate>(md::STOCK_LOCATE_QQQ), 100);
                 sim.run();
+
+                bench_result.simulated_trades = strategy_ptr->trades;
+                bench_result.checksum = strategy_ptr->checksum;
+                bench_result.messages = data.size();
             });
 
-            SimulatorBenchmarkResult bench_result{};
             bench_result.seconds = result.seconds;
             bench_result.messages_per_second = data.size() / result.seconds;
-            bench_result.messages = data.size();
-            bench_result.simulated_trades = 0;
 
             return bench_result;
         }
@@ -144,8 +117,15 @@ namespace benchmark {
             SimulatorLatencyBenchmarkResult result{};
             result.histogram.fill(0);
 
-            auto strategy = std::make_unique<TradingStrategy>();
-            TradingStrategy *strategy_ptr = strategy.get();
+            sim::DebugStrategy::Config config{};
+
+            config.flush_mode = sim::DebugStrategy::FlushMode::OnFinish;
+            config.log_events = false;
+            config.log_file_path = "sim_latency_strategy.log";
+            config.log_trades = true;
+
+            std::unique_ptr<sim::DebugStrategy> strategy = std::make_unique<sim::DebugStrategy>(config);
+            sim::DebugStrategy *strategy_ptr = strategy.get();
 
             sim::Simulator sim(
                 std::make_unique<EmptyInputSource>(),
@@ -153,7 +133,7 @@ namespace benchmark {
             );
             sim.set_strategy_simulator();
             sim.add_tracked_stock(md::STOCK_LOCATE_QQQ);
-            sim.set_event_throttle(std::optional<dt::StockLocate>(md::STOCK_LOCATE_QQQ), 1);
+            sim.set_event_throttle(std::optional<dt::StockLocate>(md::STOCK_LOCATE_QQQ), 100);
 
             md::Cursor cursor(data.data(), data.size());
 

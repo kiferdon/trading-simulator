@@ -68,14 +68,6 @@ namespace benchmark {
             p999_seconds
         )
 
-        struct NullStrategy : public sim::IStrategy {
-            void on_event(const sim::MarketEvent &) override {
-            }
-
-            void on_trade(const sim::SimulatedTrade &) override {
-            }
-        };
-
         SimulatorBenchmarkResult run_throughput(
             const std::vector<char> &data
         );

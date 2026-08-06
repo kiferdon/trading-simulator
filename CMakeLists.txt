@@ -132,6 +132,9 @@ add_library(input STATIC
 add_library(simulator STATIC
         src/simulator/simulator.cpp
         src/simulator/market.cpp
+        include/strategies/debug_strategy.hpp
+        include/strategies/null_strategy.hpp
+        include/strategies/trading_strategy.hpp
 )
 
 target_link_libraries(simulator

@@ -47,7 +47,9 @@ When adding new tests, ensure they are added to `CMakeLists.txt` and run them af
 - **Direct conversation** for questions/clarifications: No need to enter plan mode for discussions or clarifications.
 - **Run tests** after changes to verify correctness.
 
-**Plans:** When using plan mode, save approved plans to `.claude/plans/` for future reference.
+**Plans:** When using plan mode, include full implementation details (exact file changes, class layouts, function
+signatures, data structures, test approach) so the user can review and correct before implementation begins. Save
+approved plans to `<project-root>/.claude/plans/` for future reference.
 
 ## Architecture
 

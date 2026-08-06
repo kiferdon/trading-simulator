@@ -1,51 +1,53 @@
 //
-// Created by Claude on 2026-05-29.
+// Simulator latency benchmark.
 //
 
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <vector>
+#include <string>
 
+#include "benchmark/common/benchmark.hpp"
+#include "benchmark/common/json_utilities.hpp"
+#include "benchmark/common/output.hpp"
 #include "benchmark/simulator/simulator_benchmark.hpp"
+#include "common/common.hpp"
 
-void load_file(const std::string &path, std::vector<char> &data) {
-    std::ifstream file(path, std::ios::binary);
-    if (!file) {
-        throw std::runtime_error("Cannot open file: " + path);
-    }
+int main(int argc, char **argv) {
+    std::cout << "Simulator latency benchmark" << std::endl;
 
-    file.seekg(0, std::ios::end);
-    size_t size = file.tellg();
-    file.seekg(0, std::ios::beg);
+    const int runs = argc > 1 ? std::atoi(argv[1]) : 1;
+    const std::string data_path = argc > 2
+                                      ? argv[2]
+                                      : "../market-data/12302019.NASDAQ_ITCH50";
+    const std::string json_path = argc > 3
+                                      ? argv[3]
+                                      : "../benchmarks/saved/output.jsonl";
 
-    data.resize(size);
-    if (!file.read(data.data(), size)) {
-        throw std::runtime_error("Failed to read file");
-    }
-}
-
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <itch_file>" << std::endl;
+    if (runs < 1) {
+        std::cerr << "Run count must be positive\n";
         return 1;
     }
 
-    const std::string path = argv[1];
+    std::cout << "Runs: " << runs << std::endl;
 
-    try {
-        std::vector<char> data;
-        load_file(path, data);
-        std::cout << "Loaded " << data.size() << " bytes" << std::endl;
+    const std::vector<char> data = common::read_file(data_path);
 
-        benchmark::simulator::SimulatorLatencyBenchmarkResult result;
-        result = benchmark::simulator::run_latency(data);
+    benchmark::BenchmarkSessionConfig config;
+    config.runs = runs;
 
-        benchmark::simulator::print_result(result, "../benchmarks/saved/simulator_latency_hist.txt");
-    } catch (const std::exception &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
-    }
+    benchmark::BenchmarkOutput output(json_path);
+
+    benchmark::run_benchmark_session(
+        config,
+        [] {},
+        [&] {
+            return benchmark::simulator::run_latency(data);
+        },
+        [&](const auto &result) {
+            benchmark::simulator::print_result(result, output.hist_path("simulator"));
+            benchmark::write_json_result(result, output.json());
+        }
+    );
 
     return 0;
 }
