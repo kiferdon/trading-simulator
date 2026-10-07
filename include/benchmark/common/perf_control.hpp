@@ -56,6 +56,15 @@ namespace benchmark {
             }
         }
     };
+
+    // Scope the counters to the workload, including exception unwinding.
+    class ScopedPerfControl {
+    public:
+        ScopedPerfControl() { PerfControl::enable(); }
+        ~ScopedPerfControl() { PerfControl::disable(); }
+        ScopedPerfControl(const ScopedPerfControl &) = delete;
+        ScopedPerfControl &operator=(const ScopedPerfControl &) = delete;
+    };
 }
 
 #endif //BENCHMARK_COMMON_PERF_CONTROL_HPP

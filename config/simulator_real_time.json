@@ -1,0 +1,13 @@
+{
+  "cpu_affinity": null,
+  "tracked_stocks": [
+    6556
+  ],
+  "event_throttle": 1,
+  "trade_journal": {
+    "path": "trade_journal.jsonl",
+    "mode": "real_time",
+    "logger_cpu": null,
+    "idle_spin_count": 1024
+  }
+}

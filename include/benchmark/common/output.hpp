@@ -5,10 +5,24 @@
 #ifndef HFT_SIMULATOR_BENCHMARK_OUTPUT_HPP
 #define HFT_SIMULATOR_BENCHMARK_OUTPUT_HPP
 
+#include <filesystem>
 #include <fstream>
 #include <string>
 
 namespace benchmark {
+    // Reserve a fresh directory atomically, including for repeated or concurrent
+    // invocations with the same result path. This runs outside measured regions.
+    inline std::filesystem::path create_artifact_directory(
+        const std::filesystem::path &json_path) {
+        auto base = json_path;
+        base += ".artifacts";
+        for (std::size_t attempt = 0;; ++attempt) {
+            auto candidate = base;
+            if (attempt != 0) candidate += "." + std::to_string(attempt);
+            if (std::filesystem::create_directory(candidate)) return candidate;
+        }
+    }
+
     // Derives the histogram output directory from a JSON file path.
     // Extracts the directory component (everything up to the last '/').
     inline std::string derive_output_dir(const std::string &json_path) {

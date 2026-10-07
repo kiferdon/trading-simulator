@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import shlex
 import subprocess
 import sys
 from datetime import datetime
@@ -88,7 +89,8 @@ def run_benchmark(
         benchmark_binary: Path,
         output_dir: Path,
         runs: int,
-        market_data: Path
+        market_data: Path,
+        extra_args: list[str]
 ) -> None:
     command = [
         sys.executable,
@@ -106,7 +108,8 @@ def run_benchmark(
         "--",
 
         str(runs),
-        str(market_data)
+        str(market_data),
+        *extra_args
     ]
 
     run_command(command)
@@ -120,7 +123,8 @@ def run_perf_stat(
         runs: int,
         cpu: int,
         market_data: Path,
-        output_file: Path
+        output_file: Path,
+        extra_args: list[str]
 ) -> None:
     command = [
         sys.executable,
@@ -145,7 +149,10 @@ def run_perf_stat(
         str(market_data),
 
         "--output",
-        str(output_file)
+        str(output_file),
+
+        "--",
+        *extra_args
     ]
 
     run_command(command)
@@ -211,6 +218,17 @@ def main():
     )
 
     parser.add_argument(
+        "--benchmark-args",
+        action="append",
+        default=[],
+        metavar="NAME=ARGS",
+        help=(
+            "Extra arguments for a scheduled executable, in both benchmark and "
+            "perf runs. Quote ARGS using shell syntax; repeated entries append."
+        )
+    )
+
+    parser.add_argument(
         "--perf-cpu",
         type=int,
         default=2
@@ -227,6 +245,32 @@ def main():
     )
 
     args = parser.parse_args()
+
+    benchmark_entries = [
+        parse_benchmark_argument(entry)
+        for entry in args.benchmark
+    ]
+    perf_entries = [
+        parse_benchmark_argument(entry)
+        for entry in args.perf_stat
+    ]
+    benchmark_names = sorted({
+        benchmark_name
+        for benchmark_name, _ in benchmark_entries + perf_entries
+    })
+    extra_args_by_name: dict[str, list[str]] = {}
+    for entry in args.benchmark_args:
+        benchmark_name, separator, arguments = entry.partition("=")
+        if not separator or benchmark_name not in benchmark_names:
+            parser.error(
+                "--benchmark-args requires NAME=ARGS with NAME matching a "
+                "--benchmark or --perf-stat entry"
+            )
+        try:
+            extra_args = shlex.split(arguments)
+        except ValueError as error:
+            parser.error(f"Invalid --benchmark-args for {benchmark_name}: {error}")
+        extra_args_by_name.setdefault(benchmark_name, []).extend(extra_args)
 
     project_dir = Path(
         args.project_dir
@@ -267,24 +311,6 @@ def main():
         exist_ok=True
     )
 
-    benchmark_entries = [
-        parse_benchmark_argument(entry)
-        for entry in args.benchmark
-    ]
-
-    perf_entries = [
-        parse_benchmark_argument(entry)
-        for entry in args.perf_stat
-    ]
-
-    benchmark_names = sorted({
-        benchmark_name
-        for benchmark_name, _ in (
-                benchmark_entries +
-                perf_entries
-        )
-    })
-
     # Configure once
 
     configure_project(
@@ -308,6 +334,10 @@ def main():
         build_dir=build_dir,
         benchmarks=benchmark_names
     )
+    metadata += "\n\nExtra benchmark arguments:\n" + "\n".join(
+        f"{name}: {shlex.join(extra_args_by_name.get(name, []))}"
+        for name in benchmark_names
+    )
 
     (
             benchmark_root /
@@ -328,7 +358,8 @@ def main():
             benchmark_binary=benchmark_binary,
             output_dir=benchmark_root,
             runs=runs,
-            market_data=market_data
+            market_data=market_data,
+            extra_args=extra_args_by_name.get(benchmark_name, [])
         )
 
     # Run perf stat
@@ -347,7 +378,8 @@ def main():
             runs=runs,
             cpu=args.perf_cpu,
             market_data=market_data,
-            output_file=output_file
+            output_file=output_file,
+            extra_args=extra_args_by_name.get(benchmark_name, [])
         )
 
     print("\nBenchmark pipeline completed.\n")

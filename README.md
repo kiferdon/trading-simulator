@@ -105,6 +105,72 @@ There are separate targets for throughput and latency:
 - Synthetic order book microbenchmark: `book_microbenchmark_throughput`, `book_microbenchmark_latency`
 - Simulator: `simulator_throughput`, `simulator_latency`
 
+The pipeline accepts extra arguments per executable. For example, from the project root:
+
+```bash
+python3 scripts/run_benchmark_pipeline.py --name custom-sim \
+  --benchmark parser_throughput:3 \
+  --benchmark simulator_throughput:3 \
+  --perf-stat simulator_throughput:1 \
+  --benchmark-args 'simulator_throughput=--config "config/custom sim.json"'
+```
+
+Use an existing configuration file for `--config`. Each `--benchmark-args NAME=ARGS` entry applies to that executable
+in both normal and perf runs; other executables receive no extra arguments. Repeat the option to configure more
+executables or append arguments. Arguments use shell-style quoting, without shell expansion or execution. Relative
+paths inside forwarded arguments are resolved from the calling working directory. Forwarded arguments are recorded
+in the pipeline metadata.
+
+Simulator benchmarks require `<runs> <market-data> <output-jsonl>` and optionally accept `--config <path>`;
+without it, they load `config/simulator.json` from the source tree. The scripts supply the three positional arguments.
+For a standalone perf run, place extra arguments after `--`:
+
+```bash
+python3 scripts/perf_stat.py --benchmark simulator_throughput \
+  --output benchmarks/saved/simulator-perf.txt -- --config config/simulator.json
+```
+
+Perf runs write benchmark JSONL beside the report, with `.jsonl` appended to its filename
+(for example, `simulator-perf.txt.jsonl`).
+
+Simulator journals, stats, and latency histograms go in a fresh directory beside each result file:
+`<output-jsonl>.artifacts`, with a numeric suffix if that directory already exists. Separate invocations retain
+their own artifacts, including when they reuse an output filename. Valid runs retain only the last journal;
+invalid runs retain their journals for diagnosis.
+
+Simulator executables return a nonzero status if any run is invalid, after writing the run results.
+The report script still writes diagnostics on failure and excludes invalid runs from performance distributions.
+If every run is invalid, it reports that performance statistics are unavailable.
+
+Simulator benchmark configuration and measurement:
+
+- `config/simulator.json` is the baseline: every-event strategy processing (`event_throttle: 1`), journal disabled,
+  and no explicit CPU affinity. Set CPU affinity for repeatable performance comparisons on your machine.
+- `config/simulator_on_stop.json`, `config/simulator_real_time.json`, and
+  `config/simulator_real_time_separate_thread.json` explicitly enable the corresponding logging workloads.
+  Set distinct simulator and logger CPUs when pinning the separate-thread mode. Its bounded queue can drop records;
+  runs with drops remain invalid for lossless logging comparisons. On-stop mode buffers records in memory.
+- Throughput calls `Simulator::run()` with an in-memory input source, including chunk delivery, bulk parsing,
+  strategy execution, and finalization. File loading and CPU warmup are outside the measurement.
+  `total_frames_per_second` and `total_gib_per_second` are the primary throughput metrics;
+  `processing_*` excludes finalization. Total time also includes the phase-boundary diagnostic snapshot.
+- Latency samples individual `process_one()` calls. Its percentiles cover frame processing, not input delivery or
+  finalization. JSON results identify the scope in `measurement_scope`.
+- Perf counters cover processing and finalization for both simulator benchmarks. Calibration, warmup, and post-run
+  journal validation are excluded. Latency perf counters also include the histogram bookkeeping.
+- `journal_candidates_per_second` means simulated trades divided by processing time, even when logging is disabled
+  or records are dropped. `journal_candidate_percentage` is candidates divided by completed frames, times 100.
+  These replace `journal_records_per_second` and `journal_record_percentage`. Accepted and written record counts
+  remain in `journal`; candidate rates are not disk-write throughput.
+
+The stock list is limited to `ITCHParser::MaxTrackedStocks` (16). JSON and C++ configurations reject larger lists
+and duplicate stocks; adding an already tracked stock through the runtime API remains a no-op.
+
+The two-argument `Simulator(input, strategy)` constructor preserves the legacy behavior: buffer trades and write
+`trades.json` as a single `{"trades": [...]}` document on stop, creating no file for an empty trade list. Its journal
+diagnostics do not count this legacy export. The three-argument constructor uses the supplied `Config` and JSONL
+journal modes; `Config{}` disables persistence. Simulator benchmarks always use this explicit configuration path.
+
 Order book benchmark implementation selection is explicit in code:
 
 - `include/benchmark/order_book/order_book_benchmark.hpp`: `OB_impl`
@@ -154,6 +220,18 @@ Run parser tests:
 ```bash
 cmake --build cmake-build-release --target itch_parser_test
 ./cmake-build-release/itch_parser_test
+```
+
+Run logging, simulator, and benchmark regression tests:
+
+```bash
+cmake --build cmake-build-release --target spsc_queue_test trade_journal_test simulator_test simulator_benchmark_test simulator_throughput simulator_latency
+./cmake-build-release/spsc_queue_test
+./cmake-build-release/spsc_queue_test wraparound
+./cmake-build-release/trade_journal_test
+./cmake-build-release/simulator_test
+./cmake-build-release/simulator_benchmark_test
+python3 -m unittest discover -s tests -p test_benchmark_logging.py -v
 ```
 
 Build benchmark targets:

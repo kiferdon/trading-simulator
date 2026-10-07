@@ -4,6 +4,7 @@
 
 #ifndef HFT_SIMULATOR_COMMON_HPP
 #define HFT_SIMULATOR_COMMON_HPP
+#include <cstdint>
 #include <fstream>
 #include <ios>
 #include <iosfwd>

@@ -93,7 +93,15 @@ def main():
         default=[]
     )
 
+    parser.add_argument(
+        "benchmark_args",
+        nargs=argparse.REMAINDER,
+        help="Extra executable arguments after -- (for example -- --config path)"
+    )
+
     args = parser.parse_args()
+    if args.benchmark_args and args.benchmark_args[0] == "--":
+        args.benchmark_args.pop(0)
 
     project_dir = Path(args.project_dir).resolve()
 
@@ -116,6 +124,7 @@ def main():
         project_dir,
         args.output
     )
+    output_jsonl = output_file.with_name(output_file.name + ".jsonl")
 
     output_file.parent.mkdir(
         parents=True,
@@ -180,14 +189,17 @@ def main():
 
             str(benchmark_binary),
             str(args.runs),
-            str(market_data)
+            str(market_data),
+            str(output_jsonl),
+            *args.benchmark_args
         ])
 
         print("Running perf stat\n")
         print(f"Benchmark: {benchmark_binary}")
         print(f"CPU: {args.cpu}")
         print(f"FIFO: {fifo_path}")
-        print(f"Output: {output_file}\n")
+        print(f"Output: {output_file}")
+        print(f"Benchmark JSONL: {output_jsonl}\n")
 
         environment = os.environ.copy()
 

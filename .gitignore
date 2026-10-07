@@ -1,6 +1,7 @@
 # Build
 cmake-build-*/
 build/
+test-reports/
 
 # IDE
 .idea/

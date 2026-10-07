@@ -126,11 +126,26 @@ add_library(input STATIC
 )
 
 #
+# LOGGING
+#
+
+add_library(logging STATIC
+        src/logging/trade_journal.cpp
+        include/logging/trade_journal.hpp
+)
+
+target_link_libraries(logging
+        PUBLIC
+        nlohmann_json::nlohmann_json
+)
+
+#
 # SIMULATOR
 #
 
 add_library(simulator STATIC
         src/simulator/simulator.cpp
+        src/simulator/simulator_config.cpp
         src/simulator/market.cpp
         include/strategies/debug_strategy.hpp
         include/strategies/null_strategy.hpp
@@ -141,6 +156,7 @@ target_link_libraries(simulator
         PUBLIC
         order_book
         input
+        logging
         nlohmann_json::nlohmann_json
 )
 
@@ -268,6 +284,11 @@ target_link_libraries(simulator_benchmark
         order_book
 )
 
+target_compile_definitions(simulator_benchmark
+        PRIVATE
+        HFT_SIMULATOR_BENCHMARK_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/config/simulator.json"
+)
+
 add_executable(simulator_throughput
         apps/benchmarks/simulator_throughput.cpp
 )
@@ -303,6 +324,42 @@ add_executable(order_book_test
         tests/order_book_test.cpp
 )
 
+add_executable(spsc_queue_test
+        tests/spsc_queue_test.cpp
+)
+
+add_executable(trade_journal_test
+        tests/trade_journal_test.cpp
+)
+
+add_executable(simulator_test
+        tests/simulator_test.cpp
+)
+
+add_executable(simulator_benchmark_test
+        tests/simulator_benchmark_test.cpp
+)
+
+target_link_libraries(trade_journal_test
+        PRIVATE
+        logging
+)
+
+target_link_libraries(simulator_test
+        PRIVATE
+        simulator
+)
+
+target_link_libraries(simulator_benchmark_test
+        PRIVATE
+        simulator_benchmark
+)
+
+target_link_libraries(spsc_queue_test
+        PRIVATE
+        Threads::Threads
+)
+
 target_link_libraries(order_book_test
         PRIVATE
         order_book
@@ -325,3 +382,8 @@ target_link_libraries(benchmark_core
         PUBLIC
         nlohmann_json::nlohmann_json
 )
+
+find_package(Threads REQUIRED)
+target_link_libraries(simulator
+        PRIVATE
+        Threads::Threads)
